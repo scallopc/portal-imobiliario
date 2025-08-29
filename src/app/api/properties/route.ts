@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb } from '@/lib/firebase-admin'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
     
     // Parâmetros de filtro opcionais
     const type = searchParams.get('type')
@@ -14,7 +16,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const page = parseInt(searchParams.get('page') || '1')
     
-    let query = adminDb.collection('properties')
+    const base = adminDb.collection('properties')
+    let query: FirebaseFirestore.Query = base
     
     // Aplicar filtros
     if (type) {
@@ -49,8 +52,8 @@ export async function GET(request: NextRequest) {
     const properties = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-      updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt,
+      createdAt: (doc.data() as any).createdAt?.toDate?.() || (doc.data() as any).createdAt,
+      updatedAt: (doc.data() as any).updatedAt?.toDate?.() || (doc.data() as any).updatedAt,
     }))
     
     return NextResponse.json({

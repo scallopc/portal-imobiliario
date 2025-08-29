@@ -226,62 +226,199 @@ export async function POST(req: NextRequest) {
       relevantProperties = [...relevantProperties].sort((a, b) => score(b) - score(a));
     }
 
-    // Criar contexto com dados das propriedades
-    const propertiesContext = propertiesData.length > 0 ? `
-INFORMAÇÕES SOBRE IMÓVEIS DISPONÍVEIS:
+    const focusLines = [
+      needsType ? '- Pergunte o tipo (apartamento, casa ou comercial?)' : '',
+      needsBudget ? '- Pergunte orçamento aproximado' : '',
+      needsRegion ? '- Pergunte região/bairro preferido' : ''
+    ].filter(Boolean).join('\n');
 
-Total de imóveis cadastrados: ${propertiesData.length}
+    // Criar contexto com dados das propriedades (montado de forma segura)
+    let propertiesContext = '';
+    if (propertiesData.length > 0) {
+      const tiposDisponiveis = Array.from(new Set(propertiesData.map(p => p.type))).join(', ');
+      const cidadesDisponiveis = Array.from(new Set(propertiesData.map(p => p.address?.city).filter(Boolean as any))).join(', ');
+      const precoMin = Math.min(...propertiesData.map(p => p.price || 0)).toLocaleString('pt-BR');
+      const precoMax = Math.max(...propertiesData.map(p => p.price || 0)).toLocaleString('pt-BR');
+      const precoMedio = Math.round(
+        propertiesData.reduce((sum, p) => sum + (p.price || 0), 0) / propertiesData.length
+      ).toLocaleString('pt-BR');
 
-LOCALIZAÇÃO DO CLIENTE:
-- Cidade: ${userLocation.city}
-- Estado: ${userLocation.state}
-- País: ${userLocation.country}
-- Coordenadas: ${userLocation.latitude}, ${userLocation.longitude}
+      const estatisticasPorTipo = Array.from(new Set(propertiesData.map(p => p.type)))
+        .map(type => {
+          const typeProperties = propertiesData.filter(p => p.type === type);
+          const avgPrice = Math.round(
+            typeProperties.reduce((sum, p) => sum + (p.price || 0), 0) / typeProperties.length
+          ).toLocaleString('pt-BR');
+          return `- ${type}: ${typeProperties.length} imóveis, preço médio R$ ${avgPrice}`;
+        })
+        .join('\n');
 
-Tipos de imóveis disponíveis:
-${Array.from(new Set(propertiesData.map(p => p.type))).join(', ')}
+      const blocos: string[] = [];
+      blocos.push('INFORMAÇÕES SOBRE IMÓVEIS DISPONÍVEIS:');
+      blocos.push('');
+      blocos.push(`Total de imóveis cadastrados: ${propertiesData.length}`);
+      blocos.push('');
+      blocos.push('LOCALIZAÇÃO DO CLIENTE:');
+      blocos.push(`- Cidade: ${userLocation.city}`);
+      blocos.push(`- Estado: ${userLocation.state}`);
+      blocos.push(`- País: ${userLocation.country}`);
+      blocos.push(`- Coordenadas: ${userLocation.latitude}, ${userLocation.longitude}`);
+      blocos.push('');
+      blocos.push('Tipos de imóveis disponíveis:');
+      blocos.push(tiposDisponiveis);
+      blocos.push('');
+      blocos.push('Cidades com imóveis:');
+      blocos.push(cidadesDisponiveis);
+      blocos.push('');
+      blocos.push('Estatísticas de preços:');
+      blocos.push(`- Mínimo: R$ ${precoMin}`);
+      blocos.push(`- Máximo: R$ ${precoMax}`);
+      blocos.push(`- Média: R$ ${precoMedio}`);
+      blocos.push('');
+      blocos.push('Estatísticas por tipo:');
+      blocos.push(estatisticasPorTipo);
 
-Cidades com imóveis:
-${Array.from(new Set(propertiesData.map(p => p.address?.city).filter(Boolean))).join(', ')}
+      if (relevantProperties.length > 0) {
+        const listaRelevantes = relevantProperties.slice(0, 5).map(p => {
+          const linhas: string[] = [];
+          linhas.push(`- ${p.title}`);
+          linhas.push(`  Tipo: ${p.type}`);
+          linhas.push(`  Preço: R$ ${(p.price || 0).toLocaleString('pt-BR')}`);
+          linhas.push(`  Localização: ${p.address?.neighborhood || ''}, ${p.address?.city || ''}`.trim());
+          linhas.push(`  Área: ${p.area}m²`);
+          if (p.bedrooms) linhas.push(`  Quartos: ${p.bedrooms}`);
+          if (p.bathrooms) linhas.push(`  Banheiros: ${p.bathrooms}`);
+          if (p.description) linhas.push(`  Descrição: ${p.description.substring(0, 100)}...`);
+          linhas.push(`  VANTAGENS: ${(p.features && p.features.slice(0, 3).join(', ')) || 'Localização privilegiada, acabamento de qualidade'}`);
+          linhas.push(`  CONTATO: ${(p.contact?.name) || 'Corretor especializado'} - ${(p.contact?.phone) || '(11) 99999-9999'}`);
+          if ((p as any).isAlternative) linhas.push('  SUGESTÃO ALTERNATIVA: Esta é uma opção que pode superar suas expectativas!');
+          return linhas.join('\n');
+        }).join('\n');
 
-Estatísticas de preços:
-- Mínimo: R$ ${Math.min(...propertiesData.map(p => p.price || 0)).toLocaleString('pt-BR')}
-- Máximo: R$ ${Math.max(...propertiesData.map(p => p.price || 0)).toLocaleString('pt-BR')}
-- Média: R$ ${Math.round(propertiesData.reduce((sum, p) => sum + (p.price || 0), 0) / propertiesData.length).toLocaleString('pt-BR')}
+        blocos.push('');
+        blocos.push('IMÓVEIS RELEVANTES PARA SUA BUSCA:');
+        blocos.push(listaRelevantes);
+        blocos.push('');
+        blocos.push('DICAS DE VENDA:');
+        blocos.push('- Destaque a localização e facilidades próximas');
+        blocos.push('- Mencione possibilidades de financiamento');
+        blocos.push('- Sugira agendar visita para conhecer pessoalmente');
+        blocos.push('- Ofereça opções de parcelamento');
+        blocos.push('- Enfatize a oportunidade única');
+        blocos.push('- Se for alternativa, destaque como pode ser melhor que o solicitado');
+        blocos.push('- Sempre seja positivo e entusiasta sobre todas as opções');
+      }
 
-Estatísticas por tipo:
-${Array.from(new Set(propertiesData.map(p => p.type))).map(type => {
-  const typeProperties = propertiesData.filter(p => p.type === type);
-  const avgPrice = Math.round(typeProperties.reduce((sum, p) => sum + (p.price || 0), 0) / typeProperties.length);
-  return `- ${type}: ${typeProperties.length} imóveis, preço médio R$ ${avgPrice.toLocaleString('pt-BR')}`;
-}).join('\n')}
+      blocos.push('');
+      blocos.push('FOCO DE COLETA (no máximo 2 perguntas na próxima resposta):');
+      blocos.push(focusLines);
 
-${relevantProperties.length > 0 ? `
-IMÓVEIS RELEVANTES PARA SUA BUSCA:
-${relevantProperties.slice(0, 5).map(p => `
-- ${p.title}
-  Tipo: ${p.type}
-  Preço: R$ ${p.price?.toLocaleString('pt-BR')}
-  Localização: ${p.address?.neighborhood}, ${p.address?.city}
-  Área: ${p.area}m²
-  ${p.bedrooms ? `Quartos: ${p.bedrooms}` : ''}
-  ${p.bathrooms ? `Banheiros: ${p.bathrooms}` : ''}
-  ${p.description ? `Descrição: ${p.description.substring(0, 100)}...` : ''}
-  VANTAGENS: ${p.features?.slice(0, 3).join(', ') || 'Localização privilegiada, acabamento de qualidade'}
-  CONTATO: ${p.contact?.name || 'Corretor especializado'} - ${p.contact?.phone || '(11) 99999-9999'}
-  ${p.isAlternative ? 'SUGESTÃO ALTERNATIVA: Esta é uma opção que pode superar suas expectativas!' : ''}
-`).join('\n')}
+      propertiesContext = blocos.join('\n');
+    }
 
-DICAS DE VENDA:
-- Destaque a localização e facilidades próximas
-- Mencione possibilidades de financiamento
-- Sugira agendar visita para conhecer pessoalmente
-- Ofereça opções de parcelamento
-- Enfatize a oportunidade única
-- Se for alternativa, destaque como pode ser melhor que o solicitado
-- Sempre seja positivo e entusiasta sobre todas as opções
-` : ''}
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
 
-FOCO DE COLETA (no máximo 2 perguntas na próxima resposta):
-${[needsType ? '- Pergunte o tipo (apartamento, casa ou comercial?)' : '', needsBudget ? '- Pergunte orçamento aproximado' : '', needsRegion ? '- Pergunte região/bairro preferido' : ''].filter(Boolean).join('\n')}
-`
+    // Criar mensagem do sistema com contexto
+    const systemMessage = {
+      role: "user" as const,
+      content: `Você é a Jade, assistente virtual especializada em imóveis do portal imobiliário. ${propertiesContext}
+
+PERSONALIDADE DA JADE - CORRETOR VIRTUAL:
+- Você é um corretor de imóveis experiente e vendedor nato
+- SEMPRE seja positivo, entusiasta e persuasivo
+- NUNCA use palavras negativas como "infelizmente", "não temos", "não disponível"
+- SEMPRE encontre oportunidades e alternativas atrativas
+- Se não tiver exatamente o que foi pedido, sugira opções similares ou melhores
+- Use linguagem motivacional e de oportunidade
+- Destaque as vantagens e benefícios de cada opção
+- Faça perguntas estratégicas para entender melhor as necessidades
+- Seja próximo e amigável com o cliente
+
+REGRAS DE ESTILO (OBRIGATÓRIO):
+- Responda de forma curta e direta (2 a 4 frases; evite blocos longos)
+- Faça no máximo 2 perguntas por mensagem
+- Nunca encerre a conversa nem diga que alguém entrará em contato; mantenha o diálogo no chat
+- Não redirecione para outras páginas; ofereça valor primeiro
+- Se já recebeu telefone/email/nome, agradeça brevemente e siga com as próximas 1–2 perguntas
+
+ESTRATÉGIAS DE VENDA POSITIVAS:
+- "Perfeito! Encontrei algumas oportunidades incríveis para você!"
+- "Excelente escolha! Deixe-me te mostrar as melhores alternativas..."
+- "Que tal dar uma olhada nessas oportunidades?"
+- "Posso te ajudar a encontrar algo ainda melhor?"
+
+LINGUAGEM POSITIVA:
+- Use "temos", "encontrei", "oportunidades", "incrível", "perfeito"
+- Evite "não temos", "infelizmente", "não disponível", "limitado"
+- Sempre destaque vantagens e benefícios
+- Sugira alternativas como melhorias, não como segunda opção
+
+COLETA SUTIL DE DADOS:
+- Se o cliente não forneceu nome, pergunte naturalmente: "Como posso te chamar?"
+- Se não tem telefone, sugira: "Quer me passar um número para agilizar?"
+- Se não tem email, ofereça: "Posso te enviar mais detalhes por e-mail?"
+- Use a localização para personalizar: "Temos ótimas opções aqui em ${userLocation.city}!"`
+    };
+
+    const contents = [
+      {
+        role: "user" as const,
+        parts: [{ text: systemMessage.content }],
+      },
+      ...trimmed.map((m: { role: "user" | "assistant"; content: string }) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      }))
+    ];
+
+    const result = await model.generateContent({ 
+      contents, 
+      generationConfig: { 
+        temperature: 0.3, 
+        maxOutputTokens: 220 
+      } 
+    });
+    const text = result.response.text();
+
+    // Salvar lead se tivermos informações suficientes
+    try {
+      if (clientInfo.name || clientInfo.email || clientInfo.phone) {
+        const baseLead = {
+          name: clientInfo.name || 'Cliente Chat',
+          message: lastMessage,
+          source: 'chat',
+          status: 'novo' as const,
+          location: userLocation,
+          interests: clientInfo.interests || [],
+          propertyTypes: relevantProperties.map(p => p.type),
+          priceRange: {
+            min: relevantProperties.length > 0 ? Math.min(...relevantProperties.map(p => p.price || 0)) : undefined,
+            max: relevantProperties.length > 0 ? Math.max(...relevantProperties.map(p => p.price || 0)) : undefined
+          },
+          interactions: [{
+            timestamp: new Date(),
+            message: lastMessage,
+            response: text
+          }],
+          userAgent: req.headers.get('user-agent') || undefined,
+          referrer: req.headers.get('referer') || undefined,
+        } as const;
+
+        const leadData: any = { ...baseLead };
+        if (clientInfo.email) leadData.email = clientInfo.email;
+        if (clientInfo.phone) leadData.phone = clientInfo.phone;
+
+        await createLead(leadData);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar lead:', error);
+      // Não falhar a resposta por erro no lead
+    }
+
+    return NextResponse.json({ reply: text });
+  } catch (error: any) {
+    console.error('Erro na API do chat:', error);
+    return NextResponse.json({ error: error?.message || "Erro interno" }, { status: 500 });
+  }
+}

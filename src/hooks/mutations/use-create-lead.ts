@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { CreateLeadInput } from "@/actions/create-lead/schema"
-import { leadsQueryKey } from "@/hooks/queries/use-leads"
-import { toast } from "sonner"
+import { leadsQueryKey } from "../queries/use-leads"
 
 async function postLead(input: CreateLeadInput): Promise<{ id: string }> {
   const res = await fetch("/api/leads", {
@@ -20,7 +19,6 @@ export function useCreateLead() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: leadsQueryKey() })
     },
-    onError: (e: Error) => toast.error(e.message || "Erro ao criar lead"),
   })
 }
 
