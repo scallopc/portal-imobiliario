@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
+/cursor
 
 # testing
 /coverage
@@ -37,3 +38,10 @@ yarn-error.log*
 next-env.d.ts
 
 .windsurfrules
+
+CRAWLER_IMPROVEMENTS.md
+CRAWLER_README.md
+GEOLOCATION_LEADS_README.md
+GUIA_CRAWLER.md
+JADE_CHAT_README.md
+PROPERTY_PAGE_README.md

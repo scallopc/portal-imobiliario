@@ -13,59 +13,93 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get('maxPrice')
     const city = searchParams.get('city')
     const neighborhood = searchParams.get('neighborhood')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const page = parseInt(searchParams.get('page') || '1')
+    const query = searchParams.get('query')
+    const bedrooms = searchParams.get('bedrooms')
+    const bathrooms = searchParams.get('bathrooms')
+    const minArea = searchParams.get('minArea')
+    const maxArea = searchParams.get('maxArea')
     
     const base = adminDb.collection('properties')
-    let query: FirebaseFirestore.Query = base
+    let firestoreQuery: FirebaseFirestore.Query = base
     
-    // Aplicar filtros
+    // Aplicar filtros do Firestore (apenas os que são indexados)
     if (type) {
-      query = query.where('type', '==', type)
+      firestoreQuery = firestoreQuery.where('type', '==', type)
     }
     
     if (minPrice) {
-      query = query.where('price', '>=', parseFloat(minPrice))
+      firestoreQuery = firestoreQuery.where('price', '>=', parseFloat(minPrice))
     }
     
     if (maxPrice) {
-      query = query.where('price', '<=', parseFloat(maxPrice))
+      firestoreQuery = firestoreQuery.where('price', '<=', parseFloat(maxPrice))
     }
     
     if (city) {
-      query = query.where('address.city', '==', city)
+      firestoreQuery = firestoreQuery.where('address.city', '==', city)
     }
     
     if (neighborhood) {
-      query = query.where('address.neighborhood', '==', neighborhood)
+      firestoreQuery = firestoreQuery.where('address.neighborhood', '==', neighborhood)
     }
     
     // Ordenar por data de criação (mais recentes primeiro)
-    query = query.orderBy('createdAt', 'desc')
+    firestoreQuery = firestoreQuery.orderBy('createdAt', 'desc')
     
-    // Paginação - Firestore não tem offset, vamos usar startAfter para paginação
-    // Por simplicidade, vamos limitar a 20 itens por página
-    query = query.limit(limit)
+    // Buscar TODOS os dados (sem paginação do Firebase)
+    const snapshot = await firestoreQuery.get()
     
-    const snapshot = await query.get()
-    
-    const properties = snapshot.docs.map(doc => ({
+    let properties = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       createdAt: (doc.data() as any).createdAt?.toDate?.() || (doc.data() as any).createdAt,
       updatedAt: (doc.data() as any).updatedAt?.toDate?.() || (doc.data() as any).updatedAt,
     }))
     
+    // Aplicar filtros no frontend (que não são indexados no Firestore)
+    if (query) {
+      const searchTerm = query.toLowerCase()
+      properties = properties.filter(property => 
+        property.title?.toLowerCase().includes(searchTerm) ||
+        property.description?.toLowerCase().includes(searchTerm) ||
+        property.address?.street?.toLowerCase().includes(searchTerm) ||
+        property.address?.neighborhood?.toLowerCase().includes(searchTerm) ||
+        property.address?.city?.toLowerCase().includes(searchTerm)
+      )
+    }
+    
+    if (bedrooms) {
+      const bedroomsNum = parseInt(bedrooms)
+      properties = properties.filter(property => 
+        property.bedrooms >= bedroomsNum
+      )
+    }
+    
+    if (bathrooms) {
+      const bathroomsNum = parseInt(bathrooms)
+      properties = properties.filter(property => 
+        property.bathrooms >= bathroomsNum
+      )
+    }
+    
+    if (minArea) {
+      const minAreaNum = parseFloat(minArea)
+      properties = properties.filter(property => 
+        property.area >= minAreaNum
+      )
+    }
+    
+    if (maxArea) {
+      const maxAreaNum = parseFloat(maxArea)
+      properties = properties.filter(property => 
+        property.area <= maxAreaNum
+      )
+    }
+    
+    // Retornar todos os dados filtrados (paginação será feita no frontend)
     return NextResponse.json({
       properties,
-      pagination: {
-        page,
-        limit,
-        total: properties.length, // Por enquanto, apenas o total da página atual
-        totalPages: 1, // Simplificado por enquanto
-        hasNext: properties.length === limit,
-        hasPrev: page > 1
-      }
+      total: properties.length
     })
     
   } catch (error) {

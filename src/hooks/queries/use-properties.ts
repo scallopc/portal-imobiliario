@@ -1,7 +1,13 @@
 import { useQuery } from "@tanstack/react-query"
 import { SearchFilters } from "@/types"
+import { useMemo } from "react"
 
 interface PropertiesResponse {
+  properties: any[]
+  total: number
+}
+
+interface PaginatedPropertiesResponse {
   properties: any[]
   pagination: {
     page: number
@@ -13,10 +19,10 @@ interface PropertiesResponse {
   }
 }
 
-export const propertiesQueryKey = (filters: SearchFilters, page: number = 1) => 
-  ["properties", "list", filters, page] as const
+export const propertiesQueryKey = (filters: SearchFilters) => 
+  ["properties", "list", filters] as const
 
-async function fetchProperties(filters: SearchFilters, page: number = 1): Promise<PropertiesResponse> {
+async function fetchProperties(filters: SearchFilters): Promise<PropertiesResponse> {
   const params = new URLSearchParams()
   
   // Adicionar filtros aos parâmetros
@@ -30,10 +36,6 @@ async function fetchProperties(filters: SearchFilters, page: number = 1): Promis
   if (filters.maxArea) params.append('maxArea', filters.maxArea.toString())
   if (filters.city) params.append('city', filters.city)
   if (filters.neighborhood) params.append('neighborhood', filters.neighborhood)
-  
-  // Parâmetros de paginação
-  params.append('page', page.toString())
-  params.append('limit', '12') // 12 propriedades por página
   
   const res = await fetch(`/api/properties?${params.toString()}`, {
     cache: "no-store",
@@ -62,11 +64,39 @@ async function fetchProperties(filters: SearchFilters, page: number = 1): Promis
   return data
 }
 
-export function useProperties(filters: SearchFilters = {}, page: number = 1) {
-  return useQuery<PropertiesResponse, Error>({
-    queryKey: propertiesQueryKey(filters, page),
-    queryFn: () => fetchProperties(filters, page),
+export function useProperties(filters: SearchFilters = {}, page: number = 1, limit: number = 12) {
+  const query = useQuery<PropertiesResponse, Error>({
+    queryKey: propertiesQueryKey(filters),
+    queryFn: () => fetchProperties(filters),
     staleTime: 2 * 60 * 1000, // 2 minutos
     gcTime: 5 * 60 * 1000, // 5 minutos
   })
+
+  // Implementar paginação no frontend
+  const paginatedData = useMemo((): PaginatedPropertiesResponse | undefined => {
+    if (!query.data) return undefined
+
+    const { properties, total } = query.data
+    const totalPages = Math.ceil(total / limit)
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedProperties = properties.slice(startIndex, endIndex)
+
+    return {
+      properties: paginatedProperties,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    }
+  }, [query.data, page, limit])
+
+  return {
+    ...query,
+    data: paginatedData
+  }
 }

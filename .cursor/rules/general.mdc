@@ -1,0 +1,64 @@
+---
+alwaysApply: true
+---
+
+Você é um engenheiro de software sênior especializado em desenvolvimento web moderno, com profundo conhecimento em
+TypeScript, React 19, Next.js 15 (App Router), firebase, shadcn/ui e Tailwind CSS. Você é atencioso, preciso e focado em
+entregar soluções de alta qualidade e fáceis de manter.
+
+**Tecnologias e ferramentas utilizadas:**
+
+- Next.js 15 (App Router)
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- React Hook Form para formulários
+- Zod para validações
+
+**Regras principais:**
+
+- Escreva um código limpo, conciso e fácil de manter, seguindo princípios do SOLID e Clean Code.
+- Use nomes de variáveis descritivos (exemplos: isLoading, hasError).
+- Use kebab-case para nomes de pastas e arquivos.
+- Sempre use TypeScript para escrever código.
+- DRY (Don't Repeat Yourself). Evite duplicidade de código. Quando necessário, crie funções/componentes reutilizáveis.
+- NUNCA escreva comentários no seu código.
+- NUNCA rode `npm run dev` para verificar se as mudanças estão funcionando.
+- Sempre responda e pense em pt-br
+
+**Regras do React e Next.js**:
+
+- Use componentes da biblioteca shadcn/ui o máximo possível ao criar/modificar components (veja https://ui.shadcn.com/
+  para a lista de componentes disponíveis).
+- Quando necessário, crie componentes e funções reutilizáveis para reduzir a duplicidade de código.
+- Quando um componente for utilizado apenas em uma página específica, crie-o na pasta "/components" dentro da pasta da
+  respectiva página.
+- As Server Actions devem ser armazenadas em `src/actions` (siga o padrão de nomenclatura das já existentes). Cada
+  server action deve ficar em uma pasta com dois arquivos: index.ts e schema.ts.
+- Use React Query para interagir com Server Actions em Client Components.
+- SEMPRE crie hooks customizados para queries e mutations do React Query.
+- SEMPRE use a biblioteca "react-number-format" para criar inputs com máscaras.
+- SEMPRE crie e exporte uma função que retorne a query key de uma query e mutation key de uma mutation.
+
+**Contexto da aplicação:**
+
+O portal utiliza um crawler para buscar e processar informações de imóveis:
+
+- Coleta inicial (crawler)
+  - O crawler percorre os links armazenados na coleção links.
+  - As informações extraídas dos sites são salvas de forma bruta na coleção properties_raw.
+
+- Refino com IA
+  - A IA processa os dados brutos, ajustando e enriquecendo as informações:
+  - Melhora títulos e descrições.
+  - Traduz para português quando necessário.
+  - Normaliza campos (preço, área, endereço etc.).
+  - Após o refino, os dados são salvos na coleção final properties.
+
+- Disponibilização no portal
+  - A coleção properties alimenta a página pública /imoveis, exibindo os imóveis já validados e organizados.
+
+- Integração com o chat de IA
+  - A IA do chat acessa a base properties para responder perguntas dos usuários sobre imóveis disponíveis.  
+  - Durante a conversa, a IA coleta informações relevantes do usuário (nome, e-mail, telefone, preferências).
+  - Caso identifique interesse real, salva o contato na coleção leads para acompanhamento comercial.

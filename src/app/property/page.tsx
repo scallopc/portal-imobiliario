@@ -14,7 +14,7 @@ export default function PropertyPage() {
   const [currentPage, setCurrentPage] = useState(1)
 
   const { data, isLoading, error } = useProperties(filters, currentPage)
-
+console.log('data', data)
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters)
     setCurrentPage(1) // Reset para primeira página quando mudar filtros
