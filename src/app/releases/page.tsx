@@ -8,13 +8,31 @@ import { ReleaseFilters as ReleaseFiltersType } from '@/types/filters';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, TrendingUp, Building, Clock, CheckCircle } from 'lucide-react';
 
-const mockReleases = [
+interface Release {
+  id: string;
+  name: string;
+  developer: string;
+  neighborhood: string;
+  status: 'na_planta' | 'em_construcao' | 'recem_entregue';
+  deliveryDate: string;
+  priceRange: { min: number; max: number };
+  units: { total: number; available: number };
+  bedrooms: number[];
+  areas: { min: number; max: number };
+  images: string[];
+  description: string;
+  features: string[];
+  financing: string[];
+  vgv: number;
+}
+
+const mockReleases: Release[] = [
   {
     id: '1',
     name: 'Residencial Vista Mar',
     developer: 'Construtora Premium',
     neighborhood: 'Barra da Tijuca',
-    status: 'na_planta',
+    status: 'na_planta' as const,
     deliveryDate: '2026-06-01',
     priceRange: { min: 850000, max: 1200000 },
     units: { total: 120, available: 95 },
@@ -34,7 +52,7 @@ const mockReleases = [
     name: 'Condomínio Jardim Atlântico',
     developer: 'Incorporadora Moderna',
     neighborhood: 'Recreio dos Bandeirantes',
-    status: 'em_construcao',
+    status: 'em_construcao' as const,
     deliveryDate: '2025-12-01',
     priceRange: { min: 650000, max: 950000 },
     units: { total: 80, available: 32 },
@@ -54,7 +72,7 @@ const mockReleases = [
     name: 'Edifício Golden Tower',
     developer: 'Golden Incorporações',
     neighborhood: 'Icaraí',
-    status: 'recem_entregue',
+    status: 'recem_entregue' as const,
     deliveryDate: '2024-08-01',
     priceRange: { min: 750000, max: 1100000 },
     units: { total: 60, available: 8 },
