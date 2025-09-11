@@ -1,12 +1,12 @@
 
-import { HeroSection, SummarySection, FindHomeSection } from './sections-home'
+import { HeroSection, NeighborhoodHighlights, FeaturedProperties } from './home'
 
 export default function HomePage() {
   return (
     <div>
       <HeroSection />
-      <SummarySection />
-      <FindHomeSection />
+      <NeighborhoodHighlights />
+      <FeaturedProperties />
     </div>
   )
 }

@@ -13,7 +13,7 @@ export function ChatHeader() {
           <h3 className="text-lg font-bold bg-gradient-to-r from-[#e1e2e3] to-[#F2C791] bg-clip-text text-transparent">
             JADE
           </h3>
-          <p className="text-xs text-primary-clean/70">Assistente Imobiliária IA</p>
+          <p className="text-xs text-primary-clean/70">Concierge Imobiliária IA</p>
         </div>
       </div>
     </div>

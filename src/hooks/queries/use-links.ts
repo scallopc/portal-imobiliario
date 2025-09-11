@@ -1,9 +1,9 @@
 import { useQuery, queryOptions } from "@tanstack/react-query"
-import type { LinkListItem } from "@/actions/list-links/schema"
+import type { LinkDTO } from "@/actions/get-link/schema"
 
 export const linksQueryKey = () => ["links", "list"] as const
 
-async function fetchLinks(): Promise<LinkListItem[]> {
+async function fetchLinks(): Promise<LinkDTO[]> {
   const res = await fetch("/api/links", { cache: "no-store" })
   if (!res.ok) throw new Error("Falha ao carregar links")
   return res.json()

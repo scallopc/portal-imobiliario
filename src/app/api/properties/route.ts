@@ -49,12 +49,15 @@ export async function GET(request: NextRequest) {
     // Buscar TODOS os dados (sem paginação do Firebase)
     const snapshot = await firestoreQuery.get()
     
-    let properties = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: (doc.data() as any).createdAt?.toDate?.() || (doc.data() as any).createdAt,
-      updatedAt: (doc.data() as any).updatedAt?.toDate?.() || (doc.data() as any).updatedAt,
-    }))
+    let properties = snapshot.docs.map(doc => {
+      const data = doc.data() as any
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      }
+    })
     
     // Aplicar filtros no frontend (que não são indexados no Firestore)
     if (query) {

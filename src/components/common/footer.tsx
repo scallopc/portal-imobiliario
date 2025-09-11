@@ -20,8 +20,8 @@ export default function Footer() {
                             <img src="/logoall.svg" alt="Portal Imobiliário" className="w-72 brightness-0 invert-100" />
                         </div>
                         <p className="text-primary-clean leading-relaxed mb-6 text-md max-w-md">
-                            Conectando pessoas aos seus lares ideais no Rio de Janeiro.
-                            Especialistas em imóveis de alto padrão.
+                            Especialista em imóveis de luxo na Zona Sul do Rio de Janeiro.
+                            Tecnologia e experiência humana para encontrar seu lar perfeito.
                         </p>
 
                         {/* Social Links */}
@@ -47,9 +47,6 @@ export default function Footer() {
                             </Link>
                             <Link href="/imoveis" className="text-primary-clean hover:text-gold bg-darkBrown/30 hover:bg-gold/20 transition-all duration-300 hover:scale-110 flex items-center">
                                 Imóveis
-                            </Link>
-                            <Link href="/locacao" className="text-primary-clean hover:text-gold bg-darkBrown/30 hover:bg-gold/20 transition-all duration-300 hover:scale-110 flex items-center">
-                                Locação
                             </Link>
                             <Link href="/quem-somos" className="text-primary-clean hover:text-gold bg-darkBrown/30 hover:bg-gold/20 transition-all duration-300 hover:scale-110 flex items-center">
                                 Quem Somos
@@ -81,7 +78,7 @@ export default function Footer() {
                 <div className="border-t border-gold/20 mt-12 pt-8">
                     <div className="flex flex-col items-center">
                         <p className="text-primary-clean font-sans text-center mb-4">
-                            &copy; {currentYear} Portal Imobiliário. Todos os direitos reservados.
+                            &copy; {currentYear} Zona Sul lançamentos. Todos os direitos reservados.
                         </p>
                         <div className="w-16 h-1 bg-gradient-to-r from-[#F2C791] to-[#A67C58] rounded-full"></div>
                     </div>

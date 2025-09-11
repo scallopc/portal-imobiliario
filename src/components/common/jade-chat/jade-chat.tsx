@@ -11,7 +11,7 @@ import type { ChatUiMessage } from './types'
 export default function JadeChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatUiMessage[]>([
-    { id: '1', text: 'Olá! Eu sou a JADE, sua assistente imobiliária inteligente. Como posso ajudá-lo a encontrar o imóvel perfeito hoje?', isUser: false, timestamp: new Date() },
+    { id: '1', text: 'Olá! Eu sou a JADE, sua concierge imobiliária inteligente. Como posso ajudá-lo a encontrar o imóvel perfeito hoje?', isUser: false, timestamp: new Date() },
   ])
   const chatMutation = useChatMutation()
 
