@@ -1,33 +1,19 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Building, Users, TrendingUp, Clock, CheckCircle, Eye, Heart } from 'lucide-react';
-
-interface Release {
-  id: string;
-  name: string;
-  developer: string;
-  neighborhood: string;
-  status: 'na_planta' | 'em_construcao' | 'recem_entregue';
-  deliveryDate: string;
-  priceRange: { min: number; max: number };
-  units: { total: number; available: number };
-  bedrooms: number[];
-  areas: { min: number; max: number };
-  images: string[];
-  description: string;
-  features: string[];
-  financing: string[];
-  vgv: number;
-}
+import { WhatsAppButton } from '@/components/common/WhatsAppButton';
+import { MapPin, Calendar, Building, Users, TrendingUp, Clock, CheckCircle, Eye, Heart, Bed } from 'lucide-react';
+import { Release, Unit } from '@/types/releases';
 
 interface ReleaseCardProps {
   release: Release;
+  units?: Unit[];
   isLoading?: boolean;
 }
 
-export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
+export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -37,8 +23,8 @@ export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('pt-BR', {
       month: 'long',
       year: 'numeric'
     });
@@ -77,7 +63,17 @@ export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
     }
   };
 
-  const statusInfo = getStatusInfo(release.status);
+  // Calcular dados das unidades
+  const unitsData = release.units || [];
+  
+  const prices = unitsData.map(unit => unit.price || 0).filter(price => price > 0);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : (release.minUnitPrice || 0);
+  const bedrooms = Array.from(new Set(unitsData.map(unit => unit.bedrooms || 0).filter(bed => bed > 0)));
+  const areas = unitsData.map(unit => unit.privateArea || 0).filter(area => area > 0);
+  const minArea = areas.length > 0 ? Math.min(...areas) : 0;
+  const maxArea = areas.length > 0 ? Math.max(...areas) : 0;
+  const availableUnits = unitsData.filter(unit => unit.status === 'Disponível').length;
+  const statusInfo = getStatusInfo(release.status || 'Lançamento');
   const StatusIcon = statusInfo.icon;
 
   return (
@@ -86,8 +82,8 @@ export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
       <div className="relative h-64 overflow-hidden">
         <div className="relative w-full h-full group-hover:scale-110 transition-transform duration-700">
           <img
-            src={release.images[0]}
-            alt={release.name}
+            src={release.images?.[0] || '/placeholder-property.jpg'}
+            alt={release.title || 'Empreendimento'}
             className="w-full h-full object-cover"
           />
           {/* Gradient Overlays */}
@@ -104,10 +100,12 @@ export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
 
         {/* Developer & Location */}
         <div className="absolute bottom-6 left-6 right-6">
-          <h3 className="text-2xl font-bold text-foreground mb-2 leading-tight">{release.name}</h3>
+          <h3 className="text-2xl font-bold text-foreground mb-2 leading-tight">{release.title || 'Empreendimento'}</h3>
           <div className="flex items-center space-x-2 text-foreground/90">
             <MapPin className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium">{release.neighborhood}</span>
+            <span className="text-sm font-medium">
+              {release.address?.neighborhood || release.address?.city || 'Localização não informada'}
+            </span>
           </div>
         </div>
       </div>
@@ -115,88 +113,91 @@ export function ReleaseCard({ release, isLoading }: ReleaseCardProps) {
       {/* Content Container */}
       <div className="p-6">
         {/* Price Range */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-accent/10 via-accent/5 to-accent/10 rounded-xl border border-accent/20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-50"></div>
-          <div className="relative flex items-center justify-between">
-            <div>
-              <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Faixa de Preço</div>
-              <div className="text-xl font-bold text-accent">
-                {formatPrice(release.priceRange.min)} - {formatPrice(release.priceRange.max)}
+        {minPrice > 0 && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-accent/10 via-accent/5 to-accent/10 rounded-xl border border-accent/20 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-50"></div>
+            <div className="relative flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">A partir de</div>
+                <div className="text-2xl font-bold text-accent">
+                  {formatPrice(minPrice)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-semibold text-card-foreground">{availableUnits}</div>
+                <div className="text-xs text-muted-foreground">unidades disponíveis</div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-lg font-semibold text-card-foreground">{release.units.available}</div>
-              <div className="text-xs text-muted-foreground">unidades disponíveis</div>
-            </div>
           </div>
-        </div>
-
-        {/* Description */}
-        <p className="text-muted-foreground mb-6 text-sm leading-relaxed line-clamp-2">
-          {release.description}
-        </p>
+        )}
 
         {/* Property Details */}
         <div className="grid grid-cols-3 gap-4 mb-6 py-4 px-2 bg-accent/5 rounded-xl border border-accent/10">
           <div className="text-center">
             <div className="bg-accent/10 rounded-full p-2 mx-auto mb-2 w-10 h-10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-accent" />
+            <Bed className="w-5 h-5 text-accent" />
             </div>
             <div className="text-sm font-bold text-card-foreground">
-              {release.bedrooms.join(', ')} qts
+              {bedrooms.length > 0 ? bedrooms.join(', ') + ' Quartos' : 'N/A'}
             </div>
-            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Quartos</div>
           </div>
           <div className="text-center">
             <div className="bg-accent/10 rounded-full p-2 mx-auto mb-2 w-10 h-10 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-accent" />
             </div>
             <div className="text-sm font-bold text-card-foreground">
-              {release.areas.min}-{release.areas.max}m²
+              {minArea > 0 && maxArea > 0 ? `${minArea} - ${maxArea}m²` : 'N/A'}
             </div>
-            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Área</div>
+         
           </div>
           <div className="text-center">
             <div className="bg-accent/10 rounded-full p-2 mx-auto mb-2 w-10 h-10 flex items-center justify-center">
               <Calendar className="w-5 h-5 text-accent" />
             </div>
             <div className="text-sm font-bold text-card-foreground">
-              {formatDate(release.deliveryDate)}
+              {release.createdAt ? formatDate(release.createdAt) : 'N/A'}
             </div>
-            <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Entrega</div>
           </div>
         </div>
 
         {/* Features */}
-        <div className="mb-6">
-          <h4 className="text-sm font-semibold text-card-foreground mb-3 uppercase tracking-wide">Principais Diferenciais</h4>
-          <div className="flex flex-wrap gap-2">
-            {release.features.slice(0, 3).map((feature) => (
-              <span
-                key={feature}
-                className="bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-medium border border-accent/20 hover:bg-accent/20 transition-colors"
-              >
-                {feature}
-              </span>
-            ))}
-            {release.features.length > 3 && (
-              <span className="text-xs text-muted-foreground bg-muted/20 px-3 py-1.5 rounded-full border border-muted/20">
-                +{release.features.length - 3} mais
-              </span>
-            )}
+        {release.features && release.features.length > 0 && (
+          <div className="mb-6">
+            <h4 className="text-sm font-semibold text-card-foreground mb-3 uppercase tracking-wide">Principais Diferenciais</h4>
+            <div className="flex flex-wrap gap-2">
+              {release.features.slice(0, 3).map((feature: string) => (
+                <span
+                  key={feature}
+                  className="bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-medium border border-accent/20 hover:bg-accent/20 transition-colors"
+                >
+                  {feature}
+                </span>
+              ))}
+              {release.features.length > 3 && (
+                <span className="text-xs text-muted-foreground bg-muted/20 px-3 py-1.5 rounded-full border border-muted/20">
+                  +{release.features.length - 3} mais
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
 
 
         {/* Action Buttons */}
         <div className="flex space-x-3">
-          <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-            Ver Detalhes
-          </Button>
-          <Button variant="outline" className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105">
+          <Link href={`/releases/${release.id}`}>
+            <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+              Ver Detalhes
+            </Button>
+          </Link>
+          <WhatsAppButton 
+            variant="outline"
+           className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            message={`Olá! Tenho interesse no lançamento: ${release.title}. Gostaria de mais informações.`}
+          >
             Tenho Interesse
-          </Button>
+          </WhatsAppButton>
         </div>
       </div>
 

@@ -3,100 +3,30 @@
 import { useState } from 'react';
 import Section from '@/components/common/section';
 import { ReleaseCard } from '@/components/releases/ReleaseCard';
-import { PropertyFilters } from '@/components/common/PropertyFilters';
-import { ReleaseFilters as ReleaseFiltersType } from '@/types/filters';
+import { SearchFilters, ReleaseFilters as ReleaseFiltersType } from '@/components/common/SearchFilters';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, TrendingUp, Building, Clock, CheckCircle } from 'lucide-react';
+import { MessageCircle, TrendingUp, Building, Clock, CheckCircle, Loader2, AlertCircle, Home } from 'lucide-react';
+import { useReleases } from '@/hooks/queries/use-releases';
+import { Release, Unit } from '@/types/releases';
+import Pagination from '@/components/common/pagination';
+import Head from 'next/head';
 
-interface Release {
-  id: string;
-  name: string;
-  developer: string;
-  neighborhood: string;
-  status: 'na_planta' | 'em_construcao' | 'recem_entregue';
-  deliveryDate: string;
-  priceRange: { min: number; max: number };
-  units: { total: number; available: number };
-  bedrooms: number[];
-  areas: { min: number; max: number };
-  images: string[];
-  description: string;
-  features: string[];
-  financing: string[];
-  vgv: number;
-}
-
-const mockReleases: Release[] = [
-  {
-    id: '1',
-    name: 'Residencial Vista Mar',
-    developer: 'Construtora Premium',
-    neighborhood: 'Barra da Tijuca',
-    status: 'na_planta' as const,
-    deliveryDate: '2026-06-01',
-    priceRange: { min: 850000, max: 1200000 },
-    units: { total: 120, available: 95 },
-    bedrooms: [2, 3, 4],
-    areas: { min: 85, max: 140 },
-    images: [
-      'https://images.pexels.com/photos/1643384/pexels-photo-1643384.jpeg',
-      'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg'
-    ],
-    description: 'Empreendimento de alto padrão com vista para o mar e acabamentos de luxo.',
-    features: ['Vista para o mar', 'Piscina infinity', 'Academia', 'Salão de festas', 'Vaga dupla'],
-    financing: ['FGTS', 'Financiamento bancário', 'Parcelamento direto'],
-    vgv: 120000000
-  },
-  {
-    id: '2',
-    name: 'Condomínio Jardim Atlântico',
-    developer: 'Incorporadora Moderna',
-    neighborhood: 'Recreio dos Bandeirantes',
-    status: 'em_construcao' as const,
-    deliveryDate: '2025-12-01',
-    priceRange: { min: 650000, max: 950000 },
-    units: { total: 80, available: 32 },
-    bedrooms: [2, 3],
-    areas: { min: 70, max: 110 },
-    images: [
-      'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg',
-      'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg'
-    ],
-    description: 'Condomínio clube com ampla área de lazer e proximidade à praia.',
-    features: ['Quadra poliesportiva', 'Playground', 'Churrasqueira', 'Portaria 24h'],
-    financing: ['FGTS', 'Minha Casa Minha Vida'],
-    vgv: 76000000
-  },
-  {
-    id: '3',
-    name: 'Edifício Golden Tower',
-    developer: 'Golden Incorporações',
-    neighborhood: 'Icaraí',
-    status: 'recem_entregue' as const,
-    deliveryDate: '2024-08-01',
-    priceRange: { min: 750000, max: 1100000 },
-    units: { total: 60, available: 8 },
-    bedrooms: [3, 4],
-    areas: { min: 95, max: 130 },
-    images: [
-      'https://images.pexels.com/photos/1732414/pexels-photo-1732414.jpeg',
-      'https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg'
-    ],
-    description: 'Torre residencial de luxo com vista panorâmica da Baía de Guanabara.',
-    features: ['Vista panorâmica', 'Cobertura duplex', 'Elevador privativo', 'Varanda gourmet'],
-    financing: ['Financiamento bancário', 'Parcelamento direto'],
-    vgv: 66000000
-  }
-];
 
 
 export default function ReleasesPage() {
+  const [currentPage, setCurrentPage] = useState(1)
   const [filters, setFilters] = useState<ReleaseFiltersType>({
     neighborhood: '',
     status: '',
-    priceRange: { min: 0, max: 2000000 },
+    priceRange: { min: 0, max: 100000000 },
     bedrooms: [],
+    bathrooms: [],
+    area: { min: 0, max: 10000 },
+    parking: [],
     deliveryDate: { min: '', max: '' }
+  });
+
+  const { data: releasesData, isLoading, error } = useReleases({
   });
 
   const handleOpenChat = () => {
@@ -119,15 +49,79 @@ export default function ReleasesPage() {
     }
   };
 
-  const filteredReleases = mockReleases.filter(release => {
-    if (filters.neighborhood && release.neighborhood !== filters.neighborhood) return false;
+  const releases = releasesData?.releases || [];
+  
+  
+  const filteredReleases = releases.filter((release: Release) => {
+    if (filters.neighborhood && release.address?.neighborhood !== filters.neighborhood) return false;
     if (filters.status && release.status !== filters.status) return false;
-    if (release.priceRange.min > filters.priceRange.max || release.priceRange.max < filters.priceRange.min) return false;
-    if (filters.bedrooms.length > 0 && !filters.bedrooms.some(bed => release.bedrooms.includes(bed))) return false;
+    
+    // Filtrar por preço baseado nas unidades
+    if (release.units && release.units.length > 0) {
+      const prices = release.units.map((unit: Unit) => unit.price || 0).filter((price: number) => price > 0);
+      if (prices.length > 0) {
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        if (minPrice > filters.priceRange.max || maxPrice < filters.priceRange.min) return false;
+      }
+    }
+    
+    if (filters.bedrooms.length > 0 && release.units) {
+      const unitBedrooms = release.units.map((unit: Unit) => unit.bedrooms || 0);
+      if (!filters.bedrooms.some(bed => unitBedrooms.includes(bed))) return false;
+    }
+    
     return true;
   });
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    // Scroll para o topo da página
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
+    <>
+     <Head>
+        <title>Lançamentos Exclusivos Zona Sul RJ | Empreendimentos Novos | Portal Imobiliário</title>
+        <meta name="description" content="Descubra os mais novos lançamentos na Zona Sul do Rio de Janeiro. Empreendimentos na planta, em construção e recém-entregues com condições especiais." />
+        <meta name="keywords" content="lançamentos zona sul, empreendimentos novos rio de janeiro, apartamentos na planta, imóveis em construção, zona sul rj" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Lançamentos Exclusivos Zona Sul RJ | Empreendimentos Novos" />
+        <meta property="og:description" content="Descubra os mais novos lançamentos na Zona Sul do Rio de Janeiro. Empreendimentos na planta, em construção e recém-entregues com condições especiais." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://zonasullancamentos.com.br/lancamentos" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://zonasullancamentos.com.br/lancamentos" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "RealEstateAgent",
+              "name": "Portal Imobiliário",
+              "description": "Especialistas em lançamentos na Zona Sul do Rio de Janeiro",
+              "url": "https://zonasullancamentos.com.br",
+              "areaServed": [
+                {
+                  "@type": "City",
+                  "name": "Rio de Janeiro",
+                  "containedInPlace": {
+                    "@type": "State",
+                    "name": "Rio de Janeiro"
+                  }
+                }
+              ],
+              "serviceType": "Real Estate Development"
+            })
+          }}
+        />
+      </Head>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <Section className="relative pt-32 pb-20">
@@ -177,61 +171,84 @@ export default function ReleasesPage() {
 
       {/* Filters and Results */}
       <Section className="py-16 bg-gradient-top">
-        <div className="container mx-auto px-4">
-          <PropertyFilters
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SearchFilters
             filters={filters}
             onFiltersChange={setFilters}
             config={{
-              showNeighborhood: true,
-              showPriceRange: true,
-              showBedrooms: true,
               showStatus: true,
-              maxPrice: 2000000
+              statusOptions: [
+                { value: 'na_planta', label: 'Na Planta', icon: Building },
+                { value: 'em_construcao', label: 'Em Construção', icon: Clock },
+                { value: 'recem_entregue', label: 'Recém Entregue', icon: CheckCircle }
+              ],
             }}
-            title="Filtros de Lançamentos"
           />
 
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                {filteredReleases.length} Lançamentos Encontrados
-              </h2>
-              <p className="text-muted-foreground">
-                Empreendimentos selecionados nas melhores localizações
-              </p>
-            </div>
+         {/* Conteúdo */}
+         <div className="min-h-[400px]">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-accent mb-4" />
+                <p className="text-gray-600">Carregando imóveis...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <AlertCircle className="h-8 w-8 text-red-500 mb-4" />
+                <p className="text-gray-600 text-center">
+                  Erro ao carregar os imóveis. Tente novamente mais tarde.
+                </p>
+              </div>
+            ) : filteredReleases.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <Home className="h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-600 text-center max-w-md">
+                  Não encontramos imóveis com os filtros selecionados. Tente ajustar os critérios de busca ou fale com Jade IA para encontrar opções personalizadas.
+                </p>
+                <Button
+                  onClick={handleOpenChat}
+                  variant="outline"
+                  className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Buscar com IA
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Informações dos resultados */}
+                <div className="flex justify-between items-center mb-6">
+                  <p>
+                    {filteredReleases.length || 0} imóveis encontrados
+                  </p>
+                  {releasesData?.pagination?.total && releasesData.pagination.total > 0 && (
+                    <p>
+                      Página {releasesData.pagination.page} de {releasesData.pagination.totalPages}
+                    </p>
+                  )}
+                </div>
 
+                {/* Grid de propriedades */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                      {filteredReleases.map((release) => (
+                    <ReleaseCard key={release.id} release={release} />
+                  ))}
+                </div>
 
+                {/* Paginação */}
+                {releasesData?.pagination && releasesData.pagination.totalPages > 1 && (
+                  <Pagination
+                    currentPage={releasesData.pagination.page}
+                    totalPages={releasesData.pagination.totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+              </>
+            )}
           </div>
-
-          {/* Results Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredReleases.map((release) => (
-              <ReleaseCard key={release.id} release={release} />
-            ))}
-          </div>
-
-          {filteredReleases.length === 0 && (
-            <div className="text-center py-16">
-              <TrendingUp className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Nenhum lançamento encontrado
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Tente ajustar os filtros ou fale com nossa IA para encontrar opções personalizadas.
-              </p>
-              <Button
-                onClick={handleOpenChat}
-                variant="outline"
-                className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Buscar com IA
-              </Button>
-            </div>
-          )}
         </div>
       </Section>
     </div>
+    </>
   );
 }

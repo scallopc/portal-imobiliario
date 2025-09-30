@@ -2,13 +2,13 @@ export interface BaseFilters {
   neighborhood: string;
   priceRange: { min: number; max: number };
   bedrooms: number[];
+  bathrooms: number[];
+  area: { min: number; max: number };
+  parking: number[];
 }
 
 export interface PropertyFilters extends BaseFilters {
   propertyType: string;
-  bathrooms: number[];
-  area: { min: number; max: number };
-  parking: number[];
 }
 
 export interface ReleaseFilters extends BaseFilters {

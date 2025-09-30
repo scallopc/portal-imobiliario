@@ -20,7 +20,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Lato:wght@300;400;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body>
+      <body suppressHydrationWarning={true}>
         <ReactQueryProvider>
           <Header />
           <div>
@@ -29,6 +29,30 @@ export default function RootLayout({
           <Footer />
           <JadeChat />
         </ReactQueryProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined') {
+                // Remove atributos de extensões do navegador que causam warnings de hidratação
+                const removeExtensionAttributes = () => {
+                  const body = document.body;
+                  if (body) {
+                    body.removeAttribute('cz-shortcut-listen');
+                    body.removeAttribute('data-new-gr-c-s-check-loaded');
+                    body.removeAttribute('data-gr-ext-installed');
+                  }
+                };
+                
+                // Remove imediatamente
+                removeExtensionAttributes();
+                
+                // Remove após um pequeno delay para capturar atributos adicionados dinamicamente
+                setTimeout(removeExtensionAttributes, 100);
+                setTimeout(removeExtensionAttributes, 500);
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   )

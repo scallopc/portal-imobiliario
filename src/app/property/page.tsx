@@ -3,48 +3,50 @@
 import { useState } from 'react'
 import Section from '@/components/common/section'
 import { PropertyCard } from '@/components/properties/PropertyCard'
-import { PropertyFilters } from '@/components/common/PropertyFilters'
+import { SearchFilters } from '@/components/common/SearchFilters'
 import Pagination from '@/components/common/pagination'
 import { useProperties } from '@/hooks/queries/use-properties'
-import { PropertyFilters as PropertyFiltersType, FilterConfig } from '@/types/filters'
-import { SearchFilters } from '@/types'
-import { Loader2, Home, AlertCircle, Search, MessageCircle } from 'lucide-react'
+import { PropertyFilters as PropertyFiltersType } from '@/types/filters'
+import { FilterConfig } from '@/components/common/SearchFilters'
+import { SearchFilters as SearchFiltersType } from '@/types'
+import { Loader2, Home, AlertCircle, Search, MessageCircle, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Head from 'next/head'
 
 export default function PropertyPage() {
   const [filters, setFilters] = useState<PropertyFiltersType>({
     neighborhood: '',
-    priceRange: { min: 0, max: 2000000 },
+    priceRange: { min: 0, max: 100000000 },
     bedrooms: [],
     propertyType: '',
     bathrooms: [],
-    area: { min: 0, max: 500 },
+    area: { min: 0, max: 10000 },
     parking: []
   })
   const [currentPage, setCurrentPage] = useState(1)
 
   const filterConfig: FilterConfig = {
-    showNeighborhood: true,
-    showPriceRange: true,
-    showBedrooms: true,
     showPropertyType: true,
-    showBathrooms: true,
-    showArea: true,
-    showParking: true,
-    maxPrice: 2000000,
-    maxArea: 500
+    propertyTypes: [
+      { value: 'apartamento', label: 'Apartamento', icon: Building },
+      { value: 'casa', label: 'Casa', icon: Home },
+      { value: 'cobertura', label: 'Cobertura', icon: Building },
+      { value: 'studio', label: 'Studio', icon: Building }
+    ],
+    maxPrice: 100000000,
+    maxArea: 10000
   }
 
   // Converter PropertyFilters para SearchFilters
-  const searchFilters: SearchFilters = {
+  const searchFilters: SearchFiltersType = {
     neighborhood: filters.neighborhood,
     type: filters.propertyType,
     minPrice: filters.priceRange.min > 0 ? filters.priceRange.min : undefined,
-    maxPrice: filters.priceRange.max < 2000000 ? filters.priceRange.max : undefined,
+    maxPrice: filters.priceRange.max < 100000000 ? filters.priceRange.max : undefined,
     bedrooms: filters.bedrooms.length > 0 ? Math.min(...filters.bedrooms) : undefined,
     bathrooms: filters.bathrooms.length > 0 ? Math.min(...filters.bathrooms) : undefined,
     minArea: filters.area.min > 0 ? filters.area.min : undefined,
-    maxArea: filters.area.max < 500 ? filters.area.max : undefined
+    maxArea: filters.area.max < 10000 ? filters.area.max : undefined
   }
 
   const { data, isLoading, error } = useProperties(searchFilters, currentPage)
@@ -69,6 +71,47 @@ export default function PropertyPage() {
 
   return (
     <>
+      <Head>
+        <title>Imóveis à Venda na Zona Sul RJ | Apartamentos e Casas | Portal Imobiliário</title>
+        <meta name="description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais em Ipanema, Copacabana, Leblon com as melhores condições." />
+        <meta name="keywords" content="imóveis venda zona sul, apartamentos ipanema, casas copacabana, leblon, botafogo, flamengo, imóveis rio de janeiro" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Imóveis à Venda na Zona Sul RJ | Apartamentos e Casas" />
+        <meta property="og:description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais com as melhores condições." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://zonasullancamentos.com.br/imoveis" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://zonasullancamentos.com.br/imoveis" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "RealEstateAgent",
+              "name": "Portal Imobiliário",
+              "description": "Especialistas em imóveis na Zona Sul do Rio de Janeiro",
+              "url": "https://zonasullancamentos.com.br",
+              "areaServed": [
+                {
+                  "@type": "City",
+                  "name": "Rio de Janeiro",
+                  "containedInPlace": {
+                    "@type": "State",
+                    "name": "Rio de Janeiro"
+                  }
+                }
+              ],
+              "serviceType": "Real Estate Sales"
+            })
+          }}
+        />
+      </Head>
+      
       {/* Hero Section */}
       <Section className="relative">
         {/* Background Image */}
@@ -114,11 +157,10 @@ export default function PropertyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filtros */}
           <div id="filters-section">
-            <PropertyFilters
+            <SearchFilters
               filters={filters}
               onFiltersChange={handleFiltersChange}
               config={filterConfig}
-              title="Filtros de Busca"
             />
           </div>
 
@@ -137,14 +179,19 @@ export default function PropertyPage() {
                 </p>
               </div>
             ) : data?.properties.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
                 <Home className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Nenhum imóvel encontrado
-                </h3>
                 <p className="text-gray-600 text-center max-w-md">
-                  Não encontramos imóveis com os filtros selecionados. Tente ajustar os critérios de busca.
+                  Não encontramos imóveis com os filtros selecionados. Tente ajustar os critérios de busca ou fale com Jade IA para encontrar opções personalizadas.
                 </p>
+                <Button
+                  onClick={handleOpenChat}
+                  variant="outline"
+                  className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Buscar com IA
+                </Button>
               </div>
             ) : (
               <>

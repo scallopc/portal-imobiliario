@@ -5,10 +5,17 @@ import Section from '@/components/common/section'
 import { MapPin, MessageCircle, Search, Star, Home, Building2, TrendingUp, Users, ArrowRight, Sparkles, Shield, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import Head from 'next/head'
 
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  const [particles, setParticles] = useState<Array<{
+    left: number
+    top: number
+    animationDelay: number
+    animationDuration: number
+  }>>([])
 
   const slides = [
     {
@@ -44,6 +51,16 @@ export default function HeroSection() {
 
   useEffect(() => {
     setIsVisible(true)
+    
+    // Gerar partículas com valores aleatórios
+    const generatedParticles = [...Array(20)].map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      animationDelay: Math.random() * 3,
+      animationDuration: 3 + Math.random() * 2
+    }))
+    setParticles(generatedParticles)
+    
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
     }, 6000)
@@ -62,7 +79,48 @@ export default function HeroSection() {
   }
 
   return (
-    <Section className="relative min-h-screen overflow-hidden">
+    <>
+      <Head>
+        <title>Encontre seu Lar dos Sonhos na Zona Sul RJ | Portal Imobiliário</title>
+        <meta name="description" content="Descubra os melhores imóveis na Zona Sul do Rio de Janeiro com nossa IA especializada. Apartamentos e casas em Ipanema, Copacabana, Leblon com as melhores condições." />
+        <meta name="keywords" content="imóveis zona sul rio de janeiro, apartamentos ipanema, copacabana, leblon, casas zona sul, jade ia, inteligência artificial imóveis" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Encontre seu Lar dos Sonhos na Zona Sul RJ" />
+        <meta property="og:description" content="Descubra os melhores imóveis na Zona Sul do Rio de Janeiro com nossa IA especializada. Apartamentos e casas com as melhores condições." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://zonasullancamentos.com.br" />
+        <meta property="og:image" content="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "RealEstateAgent",
+              "name": "Portal Imobiliário",
+              "description": "Especialistas em imóveis na Zona Sul do Rio de Janeiro com IA especializada",
+              "url": "https://zonasullancamentos.com.br",
+              "telephone": "+55-21-98737-2359",
+              "areaServed": [
+                {
+                  "@type": "City",
+                  "name": "Rio de Janeiro",
+                  "containedInPlace": {
+                    "@type": "State", 
+                    "name": "Rio de Janeiro"
+                  }
+                }
+              ],
+              "serviceType": "Real Estate Services"
+            })
+          }}
+        />
+      </Head>
+      
+      <Section className="relative min-h-screen overflow-hidden">
       {/* Animated Background Slides */}
       {slides.map((slide, index) => (
         <div
@@ -86,15 +144,15 @@ export default function HeroSection() {
 
       {/* Floating Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((particle, i) => (
           <div
             key={i}
             className="absolute w-2 h-2 bg-accent/20 rounded-full animate-bounce"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 2}s`
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              animationDelay: `${particle.animationDelay}s`,
+              animationDuration: `${particle.animationDuration}s`
             }}
           />
         ))}
@@ -226,5 +284,6 @@ export default function HeroSection() {
       </div>
 
     </Section>
+    </>
   )
 }

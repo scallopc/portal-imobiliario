@@ -4,6 +4,7 @@ import React from 'react';
 import { MapPin, TrendingUp, Heart, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NeighborhoodCardSkeleton } from '@/components/skeleton';
+import Head from 'next/head';
 
 const neighborhoods = [
   {
@@ -72,7 +73,15 @@ export default function NeighborhoodHighlights({ isLoading }: NeighborhoodHighli
 
   if (isLoading) {
     return (
-      <section className="py-20 bg-gradient">
+      <>
+        <Head>
+          <title>Bairros da Zona Sul RJ | Ipanema, Copacabana, Leblon | Portal Imobiliário</title>
+          <meta name="description" content="Explore os melhores bairros da Zona Sul do Rio de Janeiro. Descubra Ipanema, Copacabana, Leblon, Botafogo e outros bairros com imóveis exclusivos." />
+          <meta name="keywords" content="bairros zona sul rio de janeiro, ipanema, copacabana, leblon, botafogo, flamengo, imóveis zona sul" />
+          <meta name="robots" content="index, follow" />
+        </Head>
+        
+        <section className="py-20 bg-gradient">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4">
@@ -95,11 +104,54 @@ export default function NeighborhoodHighlights({ isLoading }: NeighborhoodHighli
           </div>
         </div>
       </section>
+      </>
     );
   }
 
   return (
-    <section className="py-20 bg-gradient">
+    <>
+      <Head>
+        <title>Bairros da Zona Sul RJ | Ipanema, Copacabana, Leblon | Portal Imobiliário</title>
+        <meta name="description" content="Explore os melhores bairros da Zona Sul do Rio de Janeiro. Descubra Ipanema, Copacabana, Leblon, Botafogo e outros bairros com imóveis exclusivos." />
+        <meta name="keywords" content="bairros zona sul rio de janeiro, ipanema, copacabana, leblon, botafogo, flamengo, imóveis zona sul" />
+        <meta name="robots" content="index, follow" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="Bairros da Zona Sul RJ | Ipanema, Copacabana, Leblon" />
+        <meta property="og:description" content="Explore os melhores bairros da Zona Sul do Rio de Janeiro. Descubra Ipanema, Copacabana, Leblon e outros bairros com imóveis exclusivos." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://zonasullancamentos.com.br/#neighborhoods" />
+        
+        {/* Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": "Bairros da Zona Sul RJ",
+              "description": "Os melhores bairros da Zona Sul do Rio de Janeiro",
+              "itemListElement": neighborhoods.map((neighborhood, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
+                  "@type": "Place",
+                  "name": neighborhood.name,
+                  "description": neighborhood.description,
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": neighborhood.name,
+                    "addressRegion": "Rio de Janeiro",
+                    "addressCountry": "BR"
+                  }
+                }
+              }))
+            })
+          }}
+        />
+      </Head>
+      
+      <section className="py-20 bg-gradient">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4">
@@ -204,5 +256,6 @@ export default function NeighborhoodHighlights({ isLoading }: NeighborhoodHighli
         </div>
       </div>
     </section>
+    </>
   );
 }

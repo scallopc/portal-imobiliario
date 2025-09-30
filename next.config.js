@@ -14,10 +14,6 @@ const nextConfig = {
         destination: '/property',
       },
       {
-        source: '/locacao',
-        destination: '/rental',
-      },
-      {
         source: '/quem-somos',
         destination: '/about',
       },
