@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import Section from '@/components/common/section'
-import { PropertyCard } from '@/components/properties/PropertyCard'
-import { SearchFilters } from '@/components/common/SearchFilters'
+import { PropertyCard } from '@/components/properties/property-card'
+import { SearchFilters } from '@/components/common/search-filters'
 import Pagination from '@/components/common/pagination'
 import { useProperties } from '@/hooks/queries/use-properties'
 import { PropertyFilters as PropertyFiltersType } from '@/types/filters'
-import { FilterConfig } from '@/components/common/SearchFilters'
+import { FilterConfig } from '@/components/common/search-filters'
 import { SearchFilters as SearchFiltersType } from '@/types'
 import { Loader2, Home, AlertCircle, Search, MessageCircle, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -76,16 +76,16 @@ export default function PropertyPage() {
         <meta name="description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais em Ipanema, Copacabana, Leblon com as melhores condições." />
         <meta name="keywords" content="imóveis venda zona sul, apartamentos ipanema, casas copacabana, leblon, botafogo, flamengo, imóveis rio de janeiro" />
         <meta name="robots" content="index, follow" />
-        
+
         {/* Open Graph */}
         <meta property="og:title" content="Imóveis à Venda na Zona Sul RJ | Apartamentos e Casas" />
         <meta property="og:description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais com as melhores condições." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://zonasullancamentos.com.br/imoveis" />
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href="https://zonasullancamentos.com.br/imoveis" />
-        
+
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -111,7 +111,7 @@ export default function PropertyPage() {
           }}
         />
       </Head>
-      
+
       {/* Hero Section */}
       <Section className="relative">
         {/* Background Image */}

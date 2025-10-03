@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PropertyCard } from '@/components/properties/PropertyCard';
+import { PropertyCard } from '@/components/properties/property-card';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import Head from 'next/head';
@@ -145,13 +145,13 @@ export default function FeaturedProperties() {
         <meta name="description" content="Descubra os melhores imóveis em destaque na Zona Sul do Rio de Janeiro. Apartamentos e casas de luxo em Ipanema, Copacabana, Leblon com as melhores condições." />
         <meta name="keywords" content="imóveis destaque zona sul, apartamentos ipanema, casas leblon, copacabana, imóveis luxo rio de janeiro" />
         <meta name="robots" content="index, follow" />
-        
+
         {/* Open Graph */}
         <meta property="og:title" content="Imóveis em Destaque - Zona Sul RJ" />
         <meta property="og:description" content="Descubra os melhores imóveis em destaque na Zona Sul do Rio de Janeiro. Apartamentos e casas de luxo com as melhores condições." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://zonasullancamentos.com.br/#featured" />
-        
+
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -189,40 +189,40 @@ export default function FeaturedProperties() {
           }}
         />
       </Head>
-      
+
       <section className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
-            Imóveis em Destaque
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Seleção especial dos melhores imóveis disponíveis na Zona Sul.
-            Nossa IA pode ajudar você a encontrar opções similares ou totalmente personalizadas.
-          </p>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
+              Imóveis em Destaque
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Seleção especial dos melhores imóveis disponíveis na Zona Sul.
+              Nossa IA pode ajudar você a encontrar opções similares ou totalmente personalizadas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredProperties.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+
+          <div className="text-center mt-16">
+
+            <Button
+              onClick={handleRedirectToProperties}
+              variant="outline"
+              size="lg"
+              className="group relative border-2 border-accent/40 text-foreground hover:bg-accent/10 hover:border-accent hover:text-accent px-10 py-5 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/15 rounded-xl backdrop-blur-sm overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-accent/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <span className="relative z-10"> Ver Mais Imóveis </span>
+            </Button>
+
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
-        </div>
-
-        <div className="text-center mt-16">
-
-          <Button
-            onClick={handleRedirectToProperties}
-            variant="outline"
-            size="lg"
-            className="group relative border-2 border-accent/40 text-foreground hover:bg-accent/10 hover:border-accent hover:text-accent px-10 py-5 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-accent/15 rounded-xl backdrop-blur-sm overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-accent/10 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <span className="relative z-10"> Ver Mais Imóveis </span>
-          </Button>
-
-        </div>
-      </div>
-    </section>
+      </section>
     </>
   );
 }

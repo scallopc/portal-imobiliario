@@ -2,7 +2,7 @@
 
 import Section from '@/components/common/section'
 import { Button } from '@/components/ui/button'
-import { WhatsAppButton } from '@/components/common/WhatsAppButton'
+import { WhatsAppButton } from '@/components/common/whatsapp-button'
 import { Badge } from '@/components/ui/badge'
 import {
   MessageCircle,

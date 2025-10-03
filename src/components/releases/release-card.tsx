@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { WhatsAppButton } from '@/components/common/WhatsAppButton';
+import { WhatsAppButton } from '@/components/common/whatsapp-button';
 import { MapPin, Calendar, Building, Users, TrendingUp, Clock, CheckCircle, Eye, Heart, Bed } from 'lucide-react';
 import { Release, Unit } from '@/types/releases';
 
@@ -65,7 +65,7 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
 
   // Calcular dados das unidades
   const unitsData = release.units || [];
-  
+
   const prices = unitsData.map(unit => unit.price || 0).filter(price => price > 0);
   const minPrice = prices.length > 0 ? Math.min(...prices) : (release.minUnitPrice || 0);
   const bedrooms = Array.from(new Set(unitsData.map(unit => unit.bedrooms || 0).filter(bed => bed > 0)));
@@ -135,7 +135,7 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
         <div className="grid grid-cols-3 gap-4 mb-6 py-4 px-2 bg-accent/5 rounded-xl border border-accent/10">
           <div className="text-center">
             <div className="bg-accent/10 rounded-full p-2 mx-auto mb-2 w-10 h-10 flex items-center justify-center">
-            <Bed className="w-5 h-5 text-accent" />
+              <Bed className="w-5 h-5 text-accent" />
             </div>
             <div className="text-sm font-bold text-card-foreground">
               {bedrooms.length > 0 ? bedrooms.join(', ') + ' Quartos' : 'N/A'}
@@ -148,7 +148,7 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
             <div className="text-sm font-bold text-card-foreground">
               {minArea > 0 && maxArea > 0 ? `${minArea} - ${maxArea}m²` : 'N/A'}
             </div>
-         
+
           </div>
           <div className="text-center">
             <div className="bg-accent/10 rounded-full p-2 mx-auto mb-2 w-10 h-10 flex items-center justify-center">
@@ -191,9 +191,9 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
               Ver Detalhes
             </Button>
           </Link>
-          <WhatsAppButton 
+          <WhatsAppButton
             variant="outline"
-           className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
             message={`Olá! Tenho interesse no lançamento: ${release.title}. Gostaria de mais informações.`}
           >
             Tenho Interesse

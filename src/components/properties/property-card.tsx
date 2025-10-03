@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { WhatsAppButton } from '@/components/common/WhatsAppButton';
+import { WhatsAppButton } from '@/components/common/whatsapp-button';
 import { MapPin, Bed, Bath, Car, Square } from 'lucide-react';
 import { PropertyCardSkeleton } from '../skeleton';
 import { propertySchema, addressSchema, type PropertyInput } from "@/schemas/property"
@@ -129,14 +129,14 @@ export function PropertyCard({ property, isLoading }: PropertyCardProps) {
               Ver Detalhes
             </Button>
           </Link>
-          <WhatsAppButton 
+          <WhatsAppButton
             variant="outline"
-           className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
             message={`Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`}
           >
             Tenho Interesse
           </WhatsAppButton>
-        </div>  
+        </div>
       </div>
 
       {/* Decorative Elements */}
