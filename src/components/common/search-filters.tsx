@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { X, Filter, Building, Clock, CheckCircle, Home, Car, Bath, Square, Bed } from 'lucide-react';
+import { defaultNeighborhoods, propertyTypes, releaseStatus } from '@/lib/constants';
 
 export interface FilterOption {
   value: string;
@@ -41,57 +42,6 @@ export interface ReleaseFilters extends BaseFilters {
   deliveryDate: { min: string; max: string };
 }
 
-const defaultNeighborhoods = [
-  'Barra da Tijuca',
-  'Botafogo',
-  'Cafubá',
-  'Camboinhas',
-  'Camorim',
-  'Catete',
-  'Charitas',
-  'Copacabana',
-  'Cosme Velho',
-  'Fátima',
-  'Flamengo',
-  'Gávea',
-  'Gloria',
-  'Grumari',
-  'Humaitá',
-  'Icaraí',
-  'Itacoatiara',
-  'Itaipu',
-  'Itanhangá',
-  'Ipanema',
-  'Jardim Botânico',
-  'Joá',
-  'Lagoa',
-  'Laranjeiras',
-  'Leblon',
-  'Leme',
-  'Piratininga',
-  'Recreio dos Bandeirantes',
-  'Santa Rosa',
-  'São Conrado',
-  'São Francisco',
-  'Tijuca',
-  'Urca',
-  'Vargem Grande',
-  'Vargem Pequena'
-];
-
-const defaultPropertyTypes: FilterOption[] = [
-  { value: 'apartamento', label: 'Apartamento', icon: Building },
-  { value: 'casa', label: 'Casa', icon: Home },
-  { value: 'cobertura', label: 'Cobertura', icon: Building },
-  { value: 'studio', label: 'Studio', icon: Building }
-];
-
-const defaultStatusOptions: FilterOption[] = [
-  { value: 'na_planta', label: 'Na Planta', icon: Building },
-  { value: 'em_construcao', label: 'Em Construção', icon: Clock },
-  { value: 'recem_entregue', label: 'Recém Entregue', icon: CheckCircle }
-];
-
 interface SearchFiltersProps {
   filters: BaseFilters | PropertyFilters | ReleaseFilters;
   onFiltersChange: (filters: any) => void;
@@ -99,9 +49,9 @@ interface SearchFiltersProps {
   title?: string;
 }
 
-export function SearchFilters({ 
-  filters, 
-  onFiltersChange, 
+export function SearchFilters({
+  filters,
+  onFiltersChange,
   config,
   title = "Filtros de Busca"
 }: SearchFiltersProps) {
@@ -114,9 +64,9 @@ export function SearchFilters({
     }).format(price);
   };
 
-  const neighborhoods = config.neighborhoods || defaultNeighborhoods;
-  const propertyTypes = config.propertyTypes || defaultPropertyTypes;
-  const statusOptions = config.statusOptions || defaultStatusOptions;
+  const neighborhoods = defaultNeighborhoods;
+  const propertyTypesOptions = propertyTypes;
+  const statusOptions = releaseStatus;
 
   const handleNeighborhoodChange = (value: string) => {
     onFiltersChange({
@@ -162,7 +112,7 @@ export function SearchFilters({
   const handleBedroomsToggle = (bedrooms: number) => {
     // Comportamento de radio button - apenas uma seleção
     const newBedrooms = filters.bedrooms.includes(bedrooms) ? [] : [bedrooms];
-    
+
     onFiltersChange({
       ...filters,
       bedrooms: newBedrooms
@@ -172,7 +122,7 @@ export function SearchFilters({
   const handleBathroomsToggle = (bathrooms: number) => {
     // Comportamento de radio button - apenas uma seleção
     const newBathrooms = filters.bathrooms.includes(bathrooms) ? [] : [bathrooms];
-    
+
     onFiltersChange({
       ...filters,
       bathrooms: newBathrooms
@@ -182,7 +132,7 @@ export function SearchFilters({
   const handleParkingToggle = (parking: number) => {
     // Comportamento de radio button - apenas uma seleção
     const newParking = filters.parking.includes(parking) ? [] : [parking];
-    
+
     onFiltersChange({
       ...filters,
       parking: newParking
@@ -222,15 +172,15 @@ export function SearchFilters({
     if (filters.parking.length > 0) return true;
     if (filters.priceRange.min > 0 || filters.priceRange.max < (config.maxPrice || 100000000)) return true;
     if (filters.area.min > 0 || filters.area.max < (config.maxArea || 10000)) return true;
-    
+
     if ('propertyType' in filters) {
       if (filters.propertyType) return true;
     }
-    
+
     if ('status' in filters) {
       if (filters.status) return true;
     }
-    
+
     return false;
   };
 
@@ -242,13 +192,13 @@ export function SearchFilters({
     if (filters.parking.length > 0) count += filters.parking.length;
     if (filters.priceRange.min > 0 || filters.priceRange.max < (config.maxPrice || 100000000)) count++;
     if (filters.area.min > 0 || filters.area.max < (config.maxArea || 10000)) count++;
-    
+
     if ('propertyType' in filters) {
       if (filters.propertyType) count++;
     }
-    
+
     if ('status' in filters && filters.status) count++;
-    
+
     return count;
   };
 
@@ -306,13 +256,11 @@ export function SearchFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
-                {propertyTypes.map((type) => {
-                  const Icon = type.icon;
+                {propertyTypesOptions.map((type) => {
                   return (
-                    <SelectItem key={type.value} value={type.value}>
+                    <SelectItem key={type} value={type}>
                       <div className="flex items-center space-x-2">
-                        {Icon && <Icon className="w-4 h-4" />}
-                        <span>{type.label}</span>
+                        <span>{type}</span>
                       </div>
                     </SelectItem>
                   );
@@ -333,12 +281,10 @@ export function SearchFilters({
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 {statusOptions.map((option) => {
-                  const Icon = option.icon;
                   return (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option} value={option}>
                       <div className="flex items-center space-x-2">
-                        {Icon && <Icon className="w-4 h-4" />}
-                        <span>{option.label}</span>
+                        <span>{option}</span>
                       </div>
                     </SelectItem>
                   );
@@ -351,7 +297,7 @@ export function SearchFilters({
         {/* Price Range Filter - Sempre visível */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Faixa de Preço</label>
-          <div className="px-3 py-2 bg-background/50 border border-accent/20 rounded-md">
+          <div className="py-2  rounded-md">
             <Slider
               value={[filters.priceRange.min, filters.priceRange.max]}
               onValueChange={handlePriceRangeChange}
@@ -367,10 +313,10 @@ export function SearchFilters({
           </div>
         </div>
 
-         {/* Area Range Filter - Sempre visível */}
-         <div className="space-y-2">
+        {/* Area Range Filter - Sempre visível */}
+        <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Área (m²)</label>
-          <div className="px-3 py-2 bg-background/50 border border-accent/20 rounded-md">
+          <div className="py-2 rounded-md">
             <Slider
               value={[filters.area?.min || 0, filters.area?.max || (config.maxArea || 10000)]}
               onValueChange={handleAreaRangeChange}
@@ -400,8 +346,8 @@ export function SearchFilters({
                 size="sm"
                 onClick={() => handleBedroomsToggle(bedrooms)}
                 className={`
-                  ${filters.bedrooms.includes(bedrooms) 
-                    ? 'bg-accent text-accent-foreground' 
+                  ${filters.bedrooms.includes(bedrooms)
+                    ? 'bg-accent text-accent-foreground'
                     : 'border-accent/20 text-foreground hover:bg-accent/10'
                   }
                 `}
@@ -424,8 +370,8 @@ export function SearchFilters({
                 size="sm"
                 onClick={() => handleBathroomsToggle(bathrooms)}
                 className={`
-                  ${filters.bathrooms?.includes(bathrooms) 
-                    ? 'bg-accent text-accent-foreground' 
+                  ${filters.bathrooms?.includes(bathrooms)
+                    ? 'bg-accent text-accent-foreground'
                     : 'border-accent/20 text-foreground hover:bg-accent/10'
                   }
                 `}
@@ -448,8 +394,8 @@ export function SearchFilters({
                 size="sm"
                 onClick={() => handleParkingToggle(parking)}
                 className={`
-                  ${filters.parking?.includes(parking) 
-                    ? 'bg-accent text-accent-foreground' 
+                  ${filters.parking?.includes(parking)
+                    ? 'bg-accent text-accent-foreground'
                     : 'border-accent/20 text-foreground hover:bg-accent/10'
                   }
                 `}
@@ -461,7 +407,7 @@ export function SearchFilters({
           </div>
         </div>
 
-       
+
       </div>
 
       {/* Active Filters Display */}
@@ -471,78 +417,78 @@ export function SearchFilters({
             {filters.neighborhood && (
               <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {filters.neighborhood}
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleNeighborhoodChange('all')}
                 />
               </Badge>
             )}
-            
+
             {'propertyType' in filters && filters.propertyType && (
               <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-                {propertyTypes.find(t => t.value === filters.propertyType)?.label}
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                {filters.propertyType}
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handlePropertyTypeChange('all')}
                 />
               </Badge>
             )}
-            
+
             {'status' in filters && filters.status && (
               <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-                {statusOptions.find(s => s.value === filters.status)?.label}
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                {filters.status}
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleStatusChange('all')}
                 />
               </Badge>
             )}
-            
+
             {filters.bedrooms.map((bedrooms) => (
               <Badge key={bedrooms} variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {bedrooms}+ quartos
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleBedroomsToggle(bedrooms)}
                 />
               </Badge>
             ))}
-            
+
             {filters.bathrooms.map((bathrooms) => (
               <Badge key={`bath-${bathrooms}`} variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {bathrooms}+ banheiros
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleBathroomsToggle(bathrooms)}
                 />
               </Badge>
             ))}
-            
+
             {filters.parking.map((parking) => (
               <Badge key={`park-${parking}`} variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {parking === 0 ? 'Sem vaga' : `${parking}+ vagas`}
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleParkingToggle(parking)}
                 />
               </Badge>
             ))}
-            
+
             {(filters.priceRange.min > 0 || filters.priceRange.max < (config.maxPrice || 100000000)) && (
               <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {formatPrice(filters.priceRange.min)} - {formatPrice(filters.priceRange.max)}
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handlePriceRangeChange([0, config.maxPrice || 100000000])}
                 />
               </Badge>
             )}
-            
+
             {(filters.area.min > 0 || filters.area.max < (config.maxArea || 10000)) && (
               <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
                 {filters.area.min}m² - {filters.area.max}m²
-                <X 
-                  className="w-3 h-3 ml-2 cursor-pointer" 
+                <X
+                  className="w-3 h-3 ml-2 cursor-pointer"
                   onClick={() => handleAreaRangeChange([0, config.maxArea || 10000])}
                 />
               </Badge>

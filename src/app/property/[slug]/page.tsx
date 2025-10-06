@@ -14,7 +14,7 @@ import Head from 'next/head';
 
 interface PropertyDetailPageProps {
   params: {
-    id: string;
+    slug: string;
   };
 }
 
@@ -40,7 +40,7 @@ const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType; lab
 );
 
 export default function PropertyDetailPage({ params }: PropertyDetailPageProps) {
-  const { data: property, isLoading, error } = useProperty(params.id);
+  const { data: property, isLoading, error } = useProperty(params.slug);
 
   if (isLoading) {
     return (
@@ -183,7 +183,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                 <Card className="border-accent/20 bg-card/80 backdrop-blur-sm shadow-lg">
                   <CardHeader className="text-center">
                     <p className="text-muted-foreground text-lg">Valor de Venda</p>
-                    <p className="text-4xl font-extrabold text-accent">{formatPrice(property.price || 0)}</p>
+                    <p className="text-4xl font-extrabold text-accent">{property.price}</p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-6">
                     <Separator className="bg-accent/20" />
@@ -192,7 +192,7 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                       <DetailItem icon={Bath} label="Banheiros" value={property.bathrooms} />
                       <DetailItem icon={Square} label="Área Total" value={`${property.totalArea} m²`} />
                       <DetailItem icon={Car} label="Vagas" value={property.parkingSpaces} />
-                      <DetailItem icon={Tag} label="Tipo" value={property.type} />
+                      <DetailItem icon={Tag} label="Tipo" value={property.propertyType} />
                     </div>
                   </CardContent>
                 </Card>

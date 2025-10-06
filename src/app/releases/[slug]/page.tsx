@@ -14,7 +14,7 @@ import { EmbedPlayer } from '@/components/properties/embed-player';
 
 interface ReleaseDetailPageProps {
   params: {
-    id: string;
+    slug: string;
   };
 }
 
@@ -91,7 +91,7 @@ const UnitCard = ({ unit }: { unit: any }) => (
 );
 
 export default function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
-  const { data: release, isLoading, error } = useRelease(params.id);
+  const { data: release, isLoading, error } = useRelease(params.slug);
 
   if (isLoading) {
     return (
@@ -121,7 +121,7 @@ export default function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
     return null;
   }
 
-  const availableUnits = release.units?.filter((unit: any) => unit.status === 'Disponível') || [];
+  const availableUnits = release.units?.filter((unit: any) => unit.status === 'Disponível' || unit.status === 'disponivel') || [];
   const minPrice = availableUnits.length > 0
     ? Math.min(...availableUnits.map((unit: any) => unit.price || 0).filter((price: number) => price > 0))
     : release.minUnitPrice || 0;
@@ -235,7 +235,7 @@ export default function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-2xl">
                       <Building className="w-6 h-6 text-accent" />
-                      Unidades Disponíveis ({availableUnits.length})
+                      Unidades Disponíveis
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -279,18 +279,10 @@ export default function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
                   <CardHeader className="text-center">
                     <p className="text-muted-foreground text-lg">A partir de</p>
                     <p className="text-4xl font-extrabold text-accent">{formatPrice(minPrice)}</p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {availableUnits.length} unidades disponíveis
-                    </p>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-6">
                     <Separator className="bg-accent/20" />
                     <div className="grid grid-cols-1 gap-6">
-                      <DetailItem
-                        icon={Building}
-                        label="Total de Unidades"
-                        value={release.unitsCount || release.units?.length || 0}
-                      />
                       <DetailItem
                         icon={Users}
                         label="Unidades Disponíveis"

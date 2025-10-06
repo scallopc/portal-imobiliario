@@ -49,7 +49,7 @@ export const propertyTypes = [
   "Triplex",
 ] as const;
 
-export const releaseStatuses = ["Na planta", "Em construção", "Recém entregue"] as const;
+export const releaseStatus = ["Na planta", "Em construção", "Recém entregue"] as const;
 
 export const cities = ["Rio de Janeiro", "Niterói"] as const;
 

@@ -13,11 +13,11 @@ export default function Footer() {
             </div>
 
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                <div className="grid md:grid-cols-4 gap-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {/* Brand Section */}
-                    <div className="md:col-span-2">
+                    <div className="sm:col-span-2 lg:col-span-2">
                         <div className="flex items-center mb-6">
-                            <img src="/logoall.svg" alt="Portal Imobiliário" className="w-72 brightness-0 invert-100" />
+                            <img src="/logoall.svg" alt="Portal Imobiliário" className="w-48 sm:w-60 lg:w-72 brightness-0 invert-100" />
                         </div>
                         <p className="text-primary-clean leading-relaxed mb-6 text-md max-w-md">
                             Especialista em imóveis de luxo na Zona Sul do Rio de Janeiro.
@@ -59,16 +59,16 @@ export default function Footer() {
                         <h4 className="text-xl font-bold mb-6 text-gold">Contato</h4>
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4 text-gold" />
-                                <span className="text-primary-clean font-sans">(21) 9999-9999</span>
+                                <Phone className="h-4 w-4 text-gold flex-shrink-0" />
+                                <span className="text-primary-clean font-sans text-sm sm:text-base">+55 (21) 98737-2359</span>
+                            </div>
+                            <div className="flex items-center gap-2 w-full">
+                                <Mail className="h-4 w-4 text-gold flex-shrink-0" />
+                                <span className="text-primary-clean font-sans text-sm sm:text-base overflow-wrap-anywhere">contato@zonasullancamentos.com.br</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-gold" />
-                                <span className="text-primary-clean font-sans">contato@portalimobiliario.com</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-gold" />
-                                <span className="text-primary-clean font-sans">Rio de Janeiro, RJ</span>
+                                <MapPin className="h-4 w-4 text-gold flex-shrink-0" />
+                                <span className="text-primary-clean font-sans text-sm sm:text-base">Rio de Janeiro - RJ - Brasil</span>
                             </div>
                         </div>
                     </div>

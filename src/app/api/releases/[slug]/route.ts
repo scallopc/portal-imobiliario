@@ -5,28 +5,31 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { slug: string } }
 ) {
   try {
-    const { id } = params
+    const { slug } = params
 
-    if (!id) {
+    if (!slug) {
       return NextResponse.json(
-        { error: 'ID do release é obrigatório' },
+        { error: 'Slug do release é obrigatório' },
         { status: 400 }
       )
     }
 
-    const releaseDoc = await adminDb.collection('releases').doc(id).get()
+    // Buscar por slug ao invés de ID do documento
+    const querySnapshot = await adminDb.collection('releases').where('slug', '==', slug).limit(1).get()
 
-    if (!releaseDoc.exists) {
+    if (querySnapshot.empty) {
       return NextResponse.json(
         { error: 'Release não encontrado' },
         { status: 404 }
       )
     }
 
+    const releaseDoc = querySnapshot.docs[0]
     const data = releaseDoc.data() as any
+    
     const release = {
       id: releaseDoc.id,
       ...data,

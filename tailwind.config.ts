@@ -22,6 +22,7 @@ const config: Config = {
         accent: "#A8894D",
         gold: "#A8894D",
         darkBg: "#050F17",
+        darkBrown: "#2D1B0E",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

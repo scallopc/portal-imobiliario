@@ -18,6 +18,7 @@ export type Address = {
 
 export type Release = {
   id: string
+  slug?: string
   title?: string
   description?: string
   images?: string[]
