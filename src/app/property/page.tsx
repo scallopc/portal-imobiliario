@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import Section from '@/components/common/section'
-import { PropertyCard } from '@/components/properties/PropertyCard'
-import { SearchFilters } from '@/components/common/SearchFilters'
+import { PropertyCard } from '@/components/properties/property-card'
+import { SearchFilters } from '@/components/common/search-filters'
 import Pagination from '@/components/common/pagination'
 import { useProperties } from '@/hooks/queries/use-properties'
 import { PropertyFilters as PropertyFiltersType } from '@/types/filters'
-import { FilterConfig } from '@/components/common/SearchFilters'
+import { FilterConfig } from '@/components/common/search-filters'
 import { SearchFilters as SearchFiltersType } from '@/types'
 import { Loader2, Home, AlertCircle, Search, MessageCircle, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Head from 'next/head'
 
 export default function PropertyPage() {
@@ -23,7 +24,9 @@ export default function PropertyPage() {
     area: { min: 0, max: 10000 },
     parking: []
   })
+
   const [currentPage, setCurrentPage] = useState(1)
+  const [activeTab, setActiveTab] = useState('venda')
 
   const filterConfig: FilterConfig = {
     showPropertyType: true,
@@ -37,20 +40,8 @@ export default function PropertyPage() {
     maxArea: 10000
   }
 
-  // Converter PropertyFilters para SearchFilters
-  const searchFilters: SearchFiltersType = {
-    neighborhood: filters.neighborhood,
-    type: filters.propertyType,
-    minPrice: filters.priceRange.min > 0 ? filters.priceRange.min : undefined,
-    maxPrice: filters.priceRange.max < 100000000 ? filters.priceRange.max : undefined,
-    bedrooms: filters.bedrooms.length > 0 ? Math.min(...filters.bedrooms) : undefined,
-    bathrooms: filters.bathrooms.length > 0 ? Math.min(...filters.bathrooms) : undefined,
-    minArea: filters.area.min > 0 ? filters.area.min : undefined,
-    maxArea: filters.area.max < 10000 ? filters.area.max : undefined
-  }
-
-  const { data, isLoading, error } = useProperties(searchFilters, currentPage)
-  console.log('data', data)
+  // Carregar todos os dados sem filtros para fazer filtragem local
+  const { data, isLoading, error } = useProperties({}, 1)
   const handleFiltersChange = (newFilters: PropertyFiltersType) => {
     setFilters(newFilters)
     setCurrentPage(1)
@@ -69,6 +60,133 @@ export default function PropertyPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    setCurrentPage(1) // Reset para primeira página ao trocar de aba
+  }
+
+  // Aplicar todos os filtros localmente
+  const applyLocalFilters = (properties: any[]) => {
+    console.log('🔍 Aplicando filtros:', filters)
+    console.log('📊 Total de propriedades antes do filtro:', properties?.length)
+    
+    return properties?.filter(property => {
+      // Filtro por bairro
+      if (filters.neighborhood && filters.neighborhood !== 'all') {
+        const propertyNeighborhood = property.address?.neighborhood?.toLowerCase().trim()
+        const filterNeighborhood = filters.neighborhood.toLowerCase().trim()
+        if (propertyNeighborhood !== filterNeighborhood) return false
+      }
+
+      // Filtro por tipo de propriedade
+      if (filters.propertyType && filters.propertyType !== 'all') {
+        // Tentar diferentes campos possíveis para o tipo
+        const propertyType = (
+          property.type || 
+          property.propertyType || 
+          property.category || 
+          property.typeProperty ||
+          property.building_type
+        )?.toLowerCase().trim()
+        
+        const filterType = filters.propertyType.toLowerCase().trim()
+        
+        // Debug específico para tipo
+        if (property.id === properties?.[0]?.id) {
+          console.log('🏠 Debug tipo:', {
+            originalPropertyType: property.type,
+            propertyObject: property,
+            availableFields: Object.keys(property),
+            processedPropertyType: propertyType,
+            filterType: filterType,
+            match: propertyType === filterType
+          })
+        }
+        
+        if (propertyType !== filterType) return false
+      }
+
+      // Filtro por preço
+      if (property.price) {
+        // Converter string de preço para número
+        let price = 0
+        if (typeof property.price === 'string') {
+          // Remove tudo exceto números, vírgulas e pontos
+          const cleanPrice = property.price.replace(/[^\d,.]/g, '')
+          // Se tem vírgula como separador decimal (ex: "1.500,00")
+          if (cleanPrice.includes(',') && cleanPrice.lastIndexOf(',') > cleanPrice.lastIndexOf('.')) {
+            price = parseFloat(cleanPrice.replace(/\./g, '').replace(',', '.'))
+          } else {
+            // Se usa ponto como separador decimal (ex: "1500.00")
+            price = parseFloat(cleanPrice.replace(/,/g, ''))
+          }
+        } else {
+          price = property.price
+        }
+        
+        // Debug do preço na primeira propriedade
+        if (property.id === data?.properties?.[0]?.id) {
+          console.log('💰 Debug preço:', {
+            originalPrice: property.price,
+            processedPrice: price,
+            priceRange: filters.priceRange
+          })
+        }
+        
+        if (filters.priceRange.min > 0 && price < filters.priceRange.min) return false
+        if (filters.priceRange.max < 100000000 && price > filters.priceRange.max) return false
+      }
+
+      // Filtro por quartos
+      if (filters.bedrooms.length > 0) {
+        const minBedrooms = Math.min(...filters.bedrooms)
+        if (!property.bedrooms || property.bedrooms < minBedrooms) return false
+      }
+
+      // Filtro por banheiros
+      if (filters.bathrooms.length > 0) {
+        const minBathrooms = Math.min(...filters.bathrooms)
+        if (!property.bathrooms || property.bathrooms < minBathrooms) return false
+      }
+
+      // Filtro por área
+      if (property.totalArea) {
+        if (filters.area.min > 0 && property.totalArea < filters.area.min) return false
+        if (filters.area.max < 10000 && property.totalArea > filters.area.max) return false
+      }
+
+      // Filtro por vagas
+      if (filters.parking.length > 0) {
+        const minParking = Math.min(...filters.parking)
+        if (minParking === 0) {
+          // Se selecionou "sem vaga", aceita propriedades sem vaga ou com 0 vagas
+          if (property.parkingSpaces && property.parkingSpaces > 0) return false
+        } else {
+          if (!property.parkingSpaces || property.parkingSpaces < minParking) return false
+        }
+      }
+
+      return true
+    }) || []
+  }
+
+  // Aplicar filtros e depois separar por status
+  const filteredProperties = applyLocalFilters(data?.properties || [])
+  console.log('✅ Propriedades após filtro:', filteredProperties?.length)
+  
+  const filterPropertiesByStatus = (properties: any[], status: string) => {
+    return properties?.filter(property => {
+      const propertyStatus = property.status?.toLowerCase()
+      return status === 'venda'
+        ? (propertyStatus === 'venda' || propertyStatus === 'available')
+        : (propertyStatus === 'aluguel' || propertyStatus === 'rented')
+    }) || []
+  }
+
+  // Separar propriedades filtradas por status
+  const propertiesForSale = filterPropertiesByStatus(filteredProperties, 'venda')
+  const propertiesForRent = filterPropertiesByStatus(filteredProperties, 'aluguel')
+
   return (
     <>
       <Head>
@@ -76,16 +194,16 @@ export default function PropertyPage() {
         <meta name="description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais em Ipanema, Copacabana, Leblon com as melhores condições." />
         <meta name="keywords" content="imóveis venda zona sul, apartamentos ipanema, casas copacabana, leblon, botafogo, flamengo, imóveis rio de janeiro" />
         <meta name="robots" content="index, follow" />
-        
+
         {/* Open Graph */}
         <meta property="og:title" content="Imóveis à Venda na Zona Sul RJ | Apartamentos e Casas" />
         <meta property="og:description" content="Encontre os melhores imóveis à venda na Zona Sul do Rio de Janeiro. Apartamentos, casas e imóveis comerciais com as melhores condições." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://zonasullancamentos.com.br/imoveis" />
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href="https://zonasullancamentos.com.br/imoveis" />
-        
+
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -111,7 +229,7 @@ export default function PropertyPage() {
           }}
         />
       </Head>
-      
+
       {/* Hero Section */}
       <Section className="relative">
         {/* Background Image */}
@@ -164,67 +282,121 @@ export default function PropertyPage() {
             />
           </div>
 
-          {/* Conteúdo */}
-          <div className="min-h-[400px]">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-accent mb-4" />
-                <p className="text-gray-600">Carregando imóveis...</p>
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="h-8 w-8 text-red-500 mb-4" />
-                <p className="text-gray-600 text-center">
-                  Erro ao carregar os imóveis. Tente novamente mais tarde.
-                </p>
-              </div>
-            ) : data?.properties.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-4">
-                <Home className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600 text-center max-w-md">
-                  Não encontramos imóveis com os filtros selecionados. Tente ajustar os critérios de busca ou fale com Jade IA para encontrar opções personalizadas.
-                </p>
-                <Button
-                  onClick={handleOpenChat}
-                  variant="outline"
-                  className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+          {/* Conteúdo separado por tabs */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className="flex justify-center mb-8">
+              <TabsList className="inline-flex h-12 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-accent/20">
+                <TabsTrigger
+                  value="venda"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Buscar com IA
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Informações dos resultados */}
-                <div className="flex justify-between items-center mb-6">
-                  <p className="text-gray-600">
-                    {data?.pagination?.total || 0} imóveis encontrados
+                  <Building className="w-4 h-4 mr-2" />
+                  Venda
+                </TabsTrigger>
+                <TabsTrigger
+                  value="aluguel"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Aluguel
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="venda" className="min-h-[400px]">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent mb-4" />
+                  <p className="text-gray-600">Carregando imóveis para venda...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <AlertCircle className="h-8 w-8 text-red-500 mb-4" />
+                  <p className="text-gray-600 text-center">
+                    Erro ao carregar os imóveis. Tente novamente mais tarde.
                   </p>
-                  {data?.pagination?.total && data.pagination.total > 0 && (
+                </div>
+              ) : propertiesForSale.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <Home className="h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-600 text-center max-w-md">
+                    Não encontramos imóveis para venda com os filtros selecionados. Tente ajustar os critérios de busca ou fale com Jade IA.
+                  </p>
+                  <Button
+                    onClick={handleOpenChat}
+                    variant="outline"
+                    className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Buscar com IA
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Informações dos resultados */}
+                  <div className="flex justify-between items-center mb-6">
                     <p className="text-gray-600">
-                      Página {data.pagination.page} de {data.pagination.totalPages}
+                      {propertiesForSale.length} imóveis para venda encontrados
                     </p>
-                  )}
-                </div>
+                  </div>
 
-                {/* Grid de propriedades */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                  {data?.properties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
-                  ))}
-                </div>
+                  {/* Grid de propriedades para venda */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {propertiesForSale.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
 
-                {/* Paginação */}
-                {data?.pagination && data.pagination.totalPages > 1 && (
-                  <Pagination
-                    currentPage={data.pagination.page}
-                    totalPages={data.pagination.totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                )}
-              </>
-            )}
-          </div>
+            <TabsContent value="aluguel" className="min-h-[400px]">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent mb-4" />
+                  <p className="text-gray-600">Carregando imóveis para aluguel...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <AlertCircle className="h-8 w-8 text-red-500 mb-4" />
+                  <p className="text-gray-600 text-center">
+                    Erro ao carregar os imóveis. Tente novamente mais tarde.
+                  </p>
+                </div>
+              ) : propertiesForRent.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                  <Home className="h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-600 text-center max-w-md">
+                    Não encontramos imóveis para aluguel com os filtros selecionados. Tente ajustar os critérios de busca ou fale com Jade IA.
+                  </p>
+                  <Button
+                    onClick={handleOpenChat}
+                    variant="outline"
+                    className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Buscar com IA
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Informações dos resultados */}
+                  <div className="flex justify-between items-center mb-6">
+                    <p className="text-gray-600">
+                      {propertiesForRent.length} imóveis para aluguel encontrados
+                    </p>
+                  </div>
+
+                  {/* Grid de propriedades para aluguel */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {propertiesForRent.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </Section>
     </>

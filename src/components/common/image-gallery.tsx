@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -28,6 +29,11 @@ export function ImageGallery({
 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fallback para imagens vazias
   if (!images || images.length === 0) {
@@ -143,8 +149,11 @@ export function ImageGallery({
       )}
 
       {/* Modal - apenas para variant advanced */}
-      {showModal && isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+      {showModal && isModalOpen && isMounted && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+        >
           <div className="relative max-w-7xl max-h-full">
             <img
               src={images[currentIndex]}
@@ -156,7 +165,7 @@ export function ImageGallery({
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white"
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white z-10"
               onClick={closeModal}
             >
               <X className="w-6 h-6" />
@@ -168,7 +177,7 @@ export function ImageGallery({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white z-10"
                   onClick={prevImage}
                 >
                   <ChevronLeft className="w-8 h-8" />
@@ -176,7 +185,7 @@ export function ImageGallery({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white z-10"
                   onClick={nextImage}
                 >
                   <ChevronRight className="w-8 h-8" />
@@ -184,7 +193,8 @@ export function ImageGallery({
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
