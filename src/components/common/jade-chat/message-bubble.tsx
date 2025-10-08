@@ -14,7 +14,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div className={`flex ${container}`}>
-      <div className={`max-w-[80%] p-3 rounded-2xl ${bubble}`}>
+      <div className={`max-w-[85%] sm:max-w-[80%] p-2 sm:p-3 rounded-2xl ${bubble}`}>
         <p className="text-sm">{message.text}</p>
         <span className="text-xs opacity-60 mt-1 block">
           {message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}

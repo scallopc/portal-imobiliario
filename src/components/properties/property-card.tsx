@@ -3,14 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { WhatsAppButton } from '@/components/common/WhatsAppButton';
+import { WhatsAppButton } from '@/components/common/whatsapp-button';
 import { MapPin, Bed, Bath, Car, Square } from 'lucide-react';
 import { PropertyCardSkeleton } from '../skeleton';
-import { propertySchema, addressSchema, type PropertyInput } from "@/schemas/property"
-import { release } from 'process';
+import { PropertyBaseSchema } from "@/schemas/property"
 
 interface PropertyCardProps {
-  property: PropertyInput;
+  property: PropertyBaseSchema;
   isLoading?: boolean;
 }
 
@@ -45,7 +44,7 @@ export function PropertyCard({ property, isLoading }: PropertyCardProps) {
         {/* Price Badge */}
         <div className="absolute top-6 left-6">
           <div className="bg-accent/95 backdrop-blur-sm text-accent-foreground px-4 py-2 rounded-full font-bold text-lg shadow-lg border border-accent/30">
-            {formatPrice(property.price || 0)}
+            {property.price}
           </div>
         </div>
 
@@ -124,24 +123,24 @@ export function PropertyCard({ property, isLoading }: PropertyCardProps) {
 
         {/* Action Buttons */}
         <div className="flex space-x-3">
-          <Link href={`/property/${property.id}`}>
+          <Link href={`/property/${property.slug}`}>
             <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               Ver Detalhes
             </Button>
           </Link>
-          <WhatsAppButton 
+          <WhatsAppButton
             variant="outline"
-           className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+            className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
             message={`Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`}
           >
             Tenho Interesse
           </WhatsAppButton>
-        </div>  
+        </div>
       </div>
 
       {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-accent/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-accent/5 to-transparent rounded-tr-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-accent/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-accent/5 to-transparent rounded-tr-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
     </div>
   );
 }

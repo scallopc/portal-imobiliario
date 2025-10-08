@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query"
 
-export const releaseQueryKey = (id: string) =>
-  ["releases", "detail", id] as const
+export const releaseQueryKey = (slug: string) =>
+  ["releases", "detail", slug] as const
 
-async function fetchRelease(id: string) {
-  const res = await fetch(`/api/releases/${id}`, {
+async function fetchRelease(slug: string) {
+  const res = await fetch(`/api/releases/${slug}`, {
     cache: "no-store",
     headers: {
       Accept: "application/json",
@@ -29,12 +29,12 @@ async function fetchRelease(id: string) {
   return data
 }
 
-export function useRelease(id: string) {
+export function useRelease(slug: string) {
   return useQuery({
-    queryKey: releaseQueryKey(id),
-    queryFn: () => fetchRelease(id),
+    queryKey: releaseQueryKey(slug),
+    queryFn: () => fetchRelease(slug),
     staleTime: 2 * 60 * 1000, // 2 minutos
     gcTime: 5 * 60 * 1000, // 5 minutos
-    enabled: !!id, // Só executa se tiver um ID
+    enabled: !!slug, // Só executa se tiver um slug
   })
 }

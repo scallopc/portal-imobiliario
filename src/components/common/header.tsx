@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "../ui/button";
-import { WhatsAppButton } from "./WhatsAppButton";
+import { WhatsAppButton } from "./whatsapp-button";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

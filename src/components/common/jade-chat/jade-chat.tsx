@@ -45,7 +45,7 @@ export default function JadeChat() {
     <>
       <FloatingButton isOpen={isOpen} onToggle={() => setIsOpen(v => !v)} />
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 h-[500px] bg-[#1a1510]/35 rounded-3xl shadow-2xl border-2 border-gold/30 z-50 flex flex-col overflow-hidden backdrop-blur-sm">
+        <div className="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-sm h-[calc(100vh-8rem)] max-h-[500px] min-h-[400px] bg-[#1a1510]/35 rounded-3xl shadow-2xl border-2 border-gold/30 z-50 flex flex-col overflow-hidden backdrop-blur-sm">
           <ChatHeader />
           <MessagesList messages={messages} />
           <ChatInput disabled={chatMutation.isPending} onSend={handleSend} />
