@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useChatMutation, ChatMessage } from '@/hooks/mutations/use-chat-mutation'
+import { useSessionId } from '@/hooks/mutations/use-chat-tracking'
 import { FloatingButton } from './floating-button'
 import { ChatHeader } from './chat-header'
 import { MessagesList } from './messages-list'
@@ -14,6 +15,7 @@ export default function JadeChat() {
     { id: '1', text: 'Olá! Eu sou a JADE, sua concierge imobiliária inteligente. Como posso ajudá-lo a encontrar o imóvel perfeito hoje?', isUser: false, timestamp: new Date() },
   ])
   const chatMutation = useChatMutation()
+  const sessionId = useSessionId()
 
   const handleSend = (text: string) => {
     const userMessage: ChatUiMessage = { id: Date.now().toString(), text, isUser: true, timestamp: new Date() }
@@ -25,13 +27,15 @@ export default function JadeChat() {
     ]
 
     chatMutation.mutate(
-      { messages: chatHistory },
+      { messages: chatHistory, sessionId },
       {
         onSuccess: (data: { reply: string }) => {
-          setMessages(prev => [...prev, { id: Date.now().toString() + '-ai', text: data.reply, isUser: false, timestamp: new Date() }])
+          const aiMessage = { id: Date.now().toString() + '-ai', text: data.reply, isUser: false, timestamp: new Date() }
+          setMessages(prev => [...prev, aiMessage])
         },
         onError: () => {
-          setMessages(prev => [...prev, { id: Date.now().toString() + '-err', text: 'Erro ao buscar resposta da IA.', isUser: false, timestamp: new Date() }])
+          const errorMessage = { id: Date.now().toString() + '-err', text: 'Erro ao buscar resposta da IA.', isUser: false, timestamp: new Date() }
+          setMessages(prev => [...prev, errorMessage])
         },
       }
     )

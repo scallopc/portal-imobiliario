@@ -11,6 +11,8 @@ import {
   type GeoLocation 
 } from "@/lib/geo-utils";
 import { createLead } from "@/actions/create-lead";
+import { createChatInteraction } from "@/actions/create-chat-interaction";
+import type { ChatInteraction } from "@/types/chat-analytics";
 
 interface PropertyWithAlternative extends Property {
   isAlternative?: boolean;
@@ -170,12 +172,17 @@ async function searchProperties(query: string, userLocation?: GeoLocation): Prom
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  
   try {
-    const { messages } = await req.json();
+    const { messages, sessionId } = await req.json();
     const trimmed = Array.isArray(messages) ? messages.slice(-6) : [];
     if (!trimmed.length) {
       return NextResponse.json({ error: "messages inválido" }, { status: 400 });
     }
+
+    // Gerar sessionId se não fornecido
+    const chatSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Obter geolocalização do cliente
     const clientIP = getClientIP(req);
@@ -324,6 +331,14 @@ export async function POST(req: NextRequest) {
       role: "user" as const,
       content: `Você é a Jade, assistente virtual especializada em imóveis do portal imobiliário. ${propertiesContext}
 
+ÁREA DE ATUAÇÃO EXCLUSIVA:
+- Você trabalha EXCLUSIVAMENTE no Rio de Janeiro e Niterói
+- Zona Sul do Rio: Barra da Tijuca, Joá, Itanhangá, Recreio dos Bandeirantes, Camorim, Vargem Grande, Vargem Pequena, Grumari
+- Zona Sul de Niterói: Icaraí, Santa Rosa, Fátima, São Francisco, Charitas
+- Região Oceânica de Niterói: Cafubá, Piratininga, Camboinhas, Itaipu, Itacoatiara, Maravista, Jardim Imbuí, Engenho do Mato, Santo Antônio, Serra Grande
+- SEMPRE direcione o cliente para essas regiões, mesmo que ele esteja em outra localização
+- Se o cliente perguntar sobre outras cidades/regiões, explique que você é especialista nessas áreas privilegiadas
+
 PERSONALIDADE DA JADE - CORRETOR VIRTUAL:
 - Você é um corretor de imóveis experiente e vendedor nato
 - SEMPRE seja positivo, entusiasta e persuasivo
@@ -334,6 +349,12 @@ PERSONALIDADE DA JADE - CORRETOR VIRTUAL:
 - Destaque as vantagens e benefícios de cada opção
 - Faça perguntas estratégicas para entender melhor as necessidades
 - Seja próximo e amigável com o cliente
+
+ESTRATÉGIA DE DIRECIONAMENTO:
+- Se o cliente estiver fora das suas áreas de atuação, destaque as vantagens de investir no Rio/Niterói
+- Mencione a valorização imobiliária, qualidade de vida, proximidade com praias
+- Sugira que essas regiões são excelentes oportunidades de investimento
+- Exemplo: "Que tal conhecer as incríveis oportunidades na Barra da Tijuca? É uma região em constante valorização!"
 
 REGRA CRÍTICA - CONFIDENCIALIDADE:
 - NUNCA revele nomes de construtoras, incorporadoras ou imobiliárias
@@ -365,7 +386,8 @@ COLETA SUTIL DE DADOS:
 - Se o cliente não forneceu nome, pergunte naturalmente: "Como posso te chamar?"
 - Se não tem telefone, sugira: "Quer me passar um número para agilizar?"
 - Se não tem email, ofereça: "Posso te enviar mais detalhes por e-mail?"
-- Use a localização para personalizar: "Temos ótimas opções aqui em ${userLocation.city}!"`
+- Sempre direcione para suas áreas de atuação: "Temos incríveis oportunidades na Barra da Tijuca, Recreio e região oceânica de Niterói!"
+- Se o cliente estiver fora do Rio/Niterói, destaque: "Que tal investir no Rio? Temos as melhores oportunidades da região!"`
     };
 
     const contents = [
@@ -387,6 +409,7 @@ COLETA SUTIL DE DADOS:
       } 
     });
     const text = result.response.text();
+    const responseTime = Date.now() - startTime;
 
     // Salvar lead se tivermos informações suficientes
     try {
@@ -423,9 +446,109 @@ COLETA SUTIL DE DADOS:
       // Não falhar a resposta por erro no lead
     }
 
-    return NextResponse.json({ reply: text });
+    // Salvar interação do chat para analytics
+    try {
+      const lastMessage = trimmed[trimmed.length - 1]?.content || '';
+      const topics = extractTopicsFromMessage(lastMessage);
+      const interactionType = determineInteractionTypeFromMessage(lastMessage);
+      const propertiesShown = countPropertiesInResponse(text);
+      const leadGenerated = !!(clientInfo.name || clientInfo.email || clientInfo.phone);
+
+      await createChatInteraction({
+        sessionId: chatSessionId,
+        userMessage: lastMessage,
+        aiResponse: text,
+        responseTime,
+        userLocation: {
+          city: userLocation.city,
+          state: userLocation.state,
+          country: userLocation.country,
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+        },
+        userAgent: req.headers.get('user-agent') || undefined,
+        referrer: req.headers.get('referer') || undefined,
+        leadGenerated,
+        propertiesShown,
+        interactionType,
+        topics,
+      });
+    } catch (error) {
+      console.error('Erro ao salvar interação do chat:', error);
+      // Não falhar a resposta por erro no tracking
+    }
+
+    return NextResponse.json({ reply: text, sessionId: chatSessionId });
   } catch (error: any) {
     console.error('Erro na API do chat:', error);
     return NextResponse.json({ error: error?.message || "Erro interno" }, { status: 500 });
   }
+}
+
+// Funções auxiliares para tracking
+function extractTopicsFromMessage(message: string): string[] {
+  const topics: string[] = []
+  const messageLower = message.toLowerCase()
+  
+  // Tipos de imóveis
+  if (messageLower.includes('apartamento')) topics.push('apartamento')
+  if (messageLower.includes('casa')) topics.push('casa')
+  if (messageLower.includes('terreno')) topics.push('terreno')
+  if (messageLower.includes('comercial')) topics.push('comercial')
+  
+  // Ações
+  if (messageLower.includes('comprar') || messageLower.includes('compra')) topics.push('compra')
+  if (messageLower.includes('alugar') || messageLower.includes('aluguel')) topics.push('aluguel')
+  if (messageLower.includes('vender') || messageLower.includes('venda')) topics.push('venda')
+  
+  // Características
+  if (messageLower.includes('preço') || messageLower.includes('valor')) topics.push('preço')
+  if (messageLower.includes('quarto')) topics.push('quartos')
+  if (messageLower.includes('banheiro')) topics.push('banheiros')
+  if (messageLower.includes('área') || messageLower.includes('tamanho')) topics.push('área')
+  if (messageLower.includes('localização') || messageLower.includes('bairro')) topics.push('localização')
+  
+  return topics.length > 0 ? topics : ['geral']
+}
+
+function determineInteractionTypeFromMessage(message: string): 'question' | 'search' | 'lead_qualification' | 'general' {
+  const messageLower = message.toLowerCase()
+  
+  // Qualificação de lead
+  if (messageLower.includes('nome') || messageLower.includes('telefone') || messageLower.includes('email') || messageLower.includes('contato')) {
+    return 'lead_qualification'
+  }
+  
+  // Busca
+  const searchTerms = ['quero', 'procuro', 'busco', 'encontrar', 'mostrar', 'ver', 'apartamento', 'casa', 'terreno']
+  if (searchTerms.some(term => messageLower.includes(term))) {
+    return 'search'
+  }
+  
+  // Pergunta
+  const questionWords = ['como', 'quando', 'onde', 'por que', 'qual', 'quanto', '?']
+  if (questionWords.some(word => messageLower.includes(word))) {
+    return 'question'
+  }
+  
+  return 'general'
+}
+
+function countPropertiesInResponse(response: string): number {
+  const propertyIndicators = [
+    'imóvel', 'propriedade', 'apartamento', 'casa', 'terreno', 'comercial',
+    'R$', 'preço', 'valor', 'quarto', 'banheiro', 'área'
+  ]
+  
+  const responseLower = response.toLowerCase()
+  
+  // Contar menções diretas de propriedades
+  const propertyMentions = (responseLower.match(/imóve(l|is)|propriedade(s)?|apartamento(s)?|casa(s)?/g) || []).length
+  
+  // Se há indicadores de propriedades, assumir pelo menos 1
+  const hasPropertyIndicators = propertyIndicators.some(indicator => 
+    responseLower.includes(indicator.toLowerCase())
+  )
+  
+  return Math.max(propertyMentions, hasPropertyIndicators ? 1 : 0)
 }
