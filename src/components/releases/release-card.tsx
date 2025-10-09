@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WhatsAppButton } from '@/components/common/whatsapp-button';
-import { MapPin, Calendar, Building, Users, TrendingUp, Clock, CheckCircle, Eye, Heart, Bed } from 'lucide-react';
+import { MapPin, Calendar, Building, TrendingUp, Clock, CheckCircle, Bed } from 'lucide-react';
 import { Release, Unit } from '@/types/releases';
 
 interface ReleaseCardProps {
@@ -24,10 +24,11 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('pt-BR', {
-      month: 'long',
+    const date = new Date(timestamp).toLocaleDateString('pt-BR', {
+      month: 'short',
       year: 'numeric'
     });
+    return date.charAt(0).toUpperCase() + date.slice(1);
   };
 
   const getStatusInfo = (status: string) => {
@@ -155,7 +156,7 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
               <Calendar className="w-5 h-5 text-accent" />
             </div>
             <div className="text-sm font-bold text-card-foreground">
-              {release.createdAt ? formatDate(release.createdAt) : 'N/A'}
+              {formatDate(release.delivery)}
             </div>
           </div>
         </div>

@@ -36,19 +36,6 @@ export default function ReleasesPage() {
     }
   };
 
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'na_planta':
-        return { icon: Building, label: 'Na Planta', color: 'text-blue-500' };
-      case 'em_construcao':
-        return { icon: Clock, label: 'Em Construção', color: 'text-orange-500' };
-      case 'recem_entregue':
-        return { icon: CheckCircle, label: 'Recém Entregue', color: 'text-green-500' };
-      default:
-        return { icon: Building, label: 'Lançamento', color: 'text-accent' };
-    }
-  };
-
   const releases = releasesData?.releases || [];
 
 

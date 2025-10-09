@@ -1,5 +1,5 @@
 
-import { HeroSection, NeighborhoodHighlights, FeaturedProperties } from './home'
+import { HeroSection, NeighborhoodHighlights, FeaturedProperties, ReleasesHighlights } from './home'
 import Head from 'next/head'
 
 export default function HomePage() {
@@ -12,7 +12,7 @@ export default function HomePage() {
         <meta name="author" content="Portal Imobiliário" />
         <meta name="robots" content="index, follow" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        
+
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://zonasullancamentos.com.br" />
@@ -21,17 +21,17 @@ export default function HomePage() {
         <meta property="og:image" content="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" />
         <meta property="og:site_name" content="Portal Imobiliário" />
         <meta property="og:locale" content="pt_BR" />
-        
+
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:url" content="https://zonasullancamentos.com.br" />
         <meta name="twitter:title" content="Portal Imobiliário | Imóveis Zona Sul RJ" />
         <meta name="twitter:description" content="Encontre os melhores imóveis na Zona Sul do Rio de Janeiro. Apartamentos, casas e lançamentos com IA especializada." />
         <meta name="twitter:image" content="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" />
-        
+
         {/* Canonical URL */}
         <link rel="canonical" href="https://zonasullancamentos.com.br" />
-        
+
         {/* Structured Data - Organization */}
         <script
           type="application/ld+json"
@@ -62,7 +62,7 @@ export default function HomePage() {
                   }
                 },
                 {
-                  "@type": "City", 
+                  "@type": "City",
                   "name": "Niterói",
                   "containedInPlace": {
                     "@type": "State",
@@ -87,7 +87,7 @@ export default function HomePage() {
             })
           }}
         />
-        
+
         {/* Structured Data - Website */}
         <script
           type="application/ld+json"
@@ -107,10 +107,10 @@ export default function HomePage() {
           }}
         />
       </Head>
-      
+
       <div>
         <HeroSection />
-        <NeighborhoodHighlights />
+        <ReleasesHighlights />
         <FeaturedProperties />
       </div>
     </>
