@@ -33,8 +33,23 @@ export default function JadeChat() {
           const aiMessage = { id: Date.now().toString() + '-ai', text: data.reply, isUser: false, timestamp: new Date() }
           setMessages(prev => [...prev, aiMessage])
         },
-        onError: () => {
-          const errorMessage = { id: Date.now().toString() + '-err', text: 'Erro ao buscar resposta da IA.', isUser: false, timestamp: new Date() }
+        onError: (error: Error) => {
+          let errorText = 'Erro ao buscar resposta da IA.'
+          
+          // Mensagens específicas baseadas no tipo de erro
+          if (error.message.includes('autenticação')) {
+            errorText = 'Erro de configuração da IA. Tente novamente em alguns minutos.'
+          } else if (error.message.includes('conexão')) {
+            errorText = 'Erro de conexão. Verifique sua internet e tente novamente.'
+          } else if (error.message.includes('indisponível')) {
+            errorText = 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.'
+          } else if (error.message.includes('servidor')) {
+            errorText = 'Erro interno. Nossa equipe foi notificada. Tente novamente.'
+          } else if (error.message.includes('Timeout')) {
+            errorText = 'A resposta está demorando mais que o esperado. Tente novamente.'
+          }
+          
+          const errorMessage = { id: Date.now().toString() + '-err', text: errorText, isUser: false, timestamp: new Date() }
           setMessages(prev => [...prev, errorMessage])
         },
       }
