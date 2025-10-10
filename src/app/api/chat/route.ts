@@ -171,6 +171,12 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
   try {
+    // Verificar variáveis de ambiente críticas
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY não está definida");
+      return NextResponse.json({ error: "Configuração da IA não encontrada" }, { status: 500 });
+    }
+
     const { messages, sessionId } = await req.json();
     const trimmed = Array.isArray(messages) ? messages.slice(-6) : [];
     if (!trimmed.length) {
@@ -353,8 +359,16 @@ export async function POST(req: NextRequest) {
       propertiesContext = blocos.join("\n");
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+    // Inicializar Google Generative AI com tratamento de erro
+    let genAI;
+    let model;
+    try {
+      genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.0-flash" });
+    } catch (error) {
+      console.error("Erro ao inicializar Google Generative AI:", error);
+      return NextResponse.json({ error: "Erro na configuração da IA" }, { status: 500 });
+    }
 
     // Criar mensagem do sistema com contexto
     const systemMessage = {
@@ -446,14 +460,23 @@ FRASES NATURAIS PARA COLETA:
       })),
     ];
 
-    const result = await model.generateContent({
-      contents,
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 220,
-      },
-    });
-    const text = result.response.text();
+    // Gerar resposta da IA com tratamento de erro
+    let result;
+    let text;
+    try {
+      result = await model.generateContent({
+        contents,
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 220,
+        },
+      });
+      text = result.response.text();
+    } catch (error) {
+      console.error("Erro ao gerar conteúdo com Gemini:", error);
+      return NextResponse.json({ error: "Erro ao processar resposta da IA" }, { status: 500 });
+    }
+    
     const responseTime = Date.now() - startTime;
 
     // Salvar lead se tivermos informações suficientes
@@ -528,7 +551,26 @@ FRASES NATURAIS PARA COLETA:
     return NextResponse.json({ reply: text, sessionId: chatSessionId });
   } catch (error: any) {
     console.error("Erro na API do chat:", error);
-    return NextResponse.json({ error: error?.message || "Erro interno" }, { status: 500 });
+    
+    // Log detalhado para debug em produção
+    console.error("Detalhes do erro:", {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Verificar se é erro de rede ou timeout
+    if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+      return NextResponse.json({ error: "Erro de conexão com o serviço de IA" }, { status: 503 });
+    }
+    
+    // Verificar se é erro de autenticação
+    if (error?.message?.includes('API key') || error?.message?.includes('authentication')) {
+      return NextResponse.json({ error: "Erro de autenticação com o serviço de IA" }, { status: 401 });
+    }
+    
+    return NextResponse.json({ error: error?.message || "Erro interno do servidor" }, { status: 500 });
   }
 }
 
