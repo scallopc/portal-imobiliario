@@ -260,17 +260,17 @@ export default function PropertyPage() {
           {/* Conteúdo separado por tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="flex justify-center mb-8">
-              <TabsList className="inline-flex h-12 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-accent/20">
+              <TabsList className="inline-flex gap-2 h-12 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-accent/20">
                 <TabsTrigger
                   value="venda"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
+                  className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
                 >
                   <Building className="w-4 h-4 mr-2" />
                   Venda
                 </TabsTrigger>
                 <TabsTrigger
                   value="aluguel"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
+                  className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Aluguel
