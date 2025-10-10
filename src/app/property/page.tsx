@@ -4,12 +4,10 @@ import { useState } from 'react'
 import Section from '@/components/common/section'
 import { PropertyCard } from '@/components/properties/property-card'
 import { SearchFilters } from '@/components/common/search-filters'
-import Pagination from '@/components/common/pagination'
 import { useProperties } from '@/hooks/queries/use-properties'
 import { PropertyFilters as PropertyFiltersType } from '@/types/filters'
 import { FilterConfig } from '@/components/common/search-filters'
-import { SearchFilters as SearchFiltersType } from '@/types'
-import { Loader2, Home, AlertCircle, Search, MessageCircle, Building } from 'lucide-react'
+import { Loader2, Home, AlertCircle, MessageCircle, Building } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Head from 'next/head'
@@ -67,9 +65,7 @@ export default function PropertyPage() {
 
   // Aplicar todos os filtros localmente
   const applyLocalFilters = (properties: any[]) => {
-    console.log('🔍 Aplicando filtros:', filters)
-    console.log('📊 Total de propriedades antes do filtro:', properties?.length)
-    
+
     return properties?.filter(property => {
       // Filtro por bairro
       if (filters.neighborhood && filters.neighborhood !== 'all') {
@@ -82,27 +78,15 @@ export default function PropertyPage() {
       if (filters.propertyType && filters.propertyType !== 'all') {
         // Tentar diferentes campos possíveis para o tipo
         const propertyType = (
-          property.type || 
-          property.propertyType || 
-          property.category || 
+          property.type ||
+          property.propertyType ||
+          property.category ||
           property.typeProperty ||
           property.building_type
         )?.toLowerCase().trim()
-        
+
         const filterType = filters.propertyType.toLowerCase().trim()
-        
-        // Debug específico para tipo
-        if (property.id === properties?.[0]?.id) {
-          console.log('🏠 Debug tipo:', {
-            originalPropertyType: property.type,
-            propertyObject: property,
-            availableFields: Object.keys(property),
-            processedPropertyType: propertyType,
-            filterType: filterType,
-            match: propertyType === filterType
-          })
-        }
-        
+
         if (propertyType !== filterType) return false
       }
 
@@ -123,16 +107,8 @@ export default function PropertyPage() {
         } else {
           price = property.price
         }
-        
-        // Debug do preço na primeira propriedade
-        if (property.id === data?.properties?.[0]?.id) {
-          console.log('💰 Debug preço:', {
-            originalPrice: property.price,
-            processedPrice: price,
-            priceRange: filters.priceRange
-          })
-        }
-        
+
+
         if (filters.priceRange.min > 0 && price < filters.priceRange.min) return false
         if (filters.priceRange.max < 100000000 && price > filters.priceRange.max) return false
       }
@@ -172,8 +148,7 @@ export default function PropertyPage() {
 
   // Aplicar filtros e depois separar por status
   const filteredProperties = applyLocalFilters(data?.properties || [])
-  console.log('✅ Propriedades após filtro:', filteredProperties?.length)
-  
+
   const filterPropertiesByStatus = (properties: any[], status: string) => {
     return properties?.filter(property => {
       const propertyStatus = property.status?.toLowerCase()
@@ -285,17 +260,17 @@ export default function PropertyPage() {
           {/* Conteúdo separado por tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="flex justify-center mb-8">
-              <TabsList className="inline-flex h-12 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-accent/20">
+              <TabsList className="inline-flex gap-2 h-12 items-center justify-center rounded-2xl bg-card/80 backdrop-blur-sm p-1 text-muted-foreground shadow-lg border border-accent/20">
                 <TabsTrigger
                   value="venda"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
+                  className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
                 >
                   <Building className="w-4 h-4 mr-2" />
                   Venda
                 </TabsTrigger>
                 <TabsTrigger
                   value="aluguel"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
+                  className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-xl px-6 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md hover:bg-accent/10"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Aluguel

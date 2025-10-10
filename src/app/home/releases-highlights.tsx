@@ -3,8 +3,7 @@
 import React from 'react';
 import { MapPin, TrendingUp, Building, MessageCircle, Calendar, Users, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { NeighborhoodCardSkeleton } from '@/components/skeleton';
-import Head from 'next/head';
+import { ReleaseCardSkeleton } from '@/components/skeleton';
 import { useReleases } from '@/hooks/queries/use-releases';
 import Link from 'next/link';
 
@@ -71,15 +70,7 @@ export default function ReleasesHighlights({ isLoading: externalLoading }: Relea
 
     if (isLoading) {
         return (
-            <>
-                <Head>
-                    <title>Lançamentos Imobiliários RJ | Zona Sul e Niterói | Portal Imobiliário</title>
-                    <meta name="description" content="Descubra os melhores lançamentos imobiliários da Zona Sul do Rio de Janeiro e Niterói. Apartamentos e casas em construção com as melhores condições." />
-                    <meta name="keywords" content="lançamentos imobiliários, apartamentos novos, zona sul rio de janeiro, niterói, imóveis na planta" />
-                    <meta name="robots" content="index, follow" />
-                </Head>
-
-                <section className="py-20 bg-gradient">
+            <section className="py-20 bg-gradient">
                     <div className="container mx-auto px-4">
                         <div className="text-center mb-16">
                             <h2 className="text-4xl font-bold text-foreground mb-4">
@@ -93,7 +84,7 @@ export default function ReleasesHighlights({ isLoading: externalLoading }: Relea
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {[...Array(6)].map((_, index) => (
-                                <NeighborhoodCardSkeleton key={index} />
+                                <ReleaseCardSkeleton key={index} />
                             ))}
                         </div>
 
@@ -102,53 +93,11 @@ export default function ReleasesHighlights({ isLoading: externalLoading }: Relea
                         </div>
                     </div>
                 </section>
-            </>
         );
     }
 
     return (
-        <>
-            <Head>
-                <title>Lançamentos Imobiliários RJ | Zona Sul e Niterói | Portal Imobiliário</title>
-                <meta name="description" content="Descubra os melhores lançamentos imobiliários da Zona Sul do Rio de Janeiro e Niterói. Apartamentos e casas em construção com as melhores condições." />
-                <meta name="keywords" content="lançamentos imobiliários, apartamentos novos, zona sul rio de janeiro, niterói, imóveis na planta" />
-                <meta name="robots" content="index, follow" />
-
-                {/* Open Graph */}
-                <meta property="og:title" content="Lançamentos Imobiliários RJ | Zona Sul e Niterói" />
-                <meta property="og:description" content="Descubra os melhores lançamentos imobiliários da Zona Sul do Rio de Janeiro e Niterói. Apartamentos e casas em construção." />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://zonasullancamentos.com.br/#releases" />
-
-                {/* Structured Data */}
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            "@context": "https://schema.org",
-                            "@type": "ItemList",
-                            "name": "Lançamentos Imobiliários RJ",
-                            "description": "Os melhores lançamentos imobiliários da Zona Sul e Niterói",
-                            "itemListElement": releases.map((release, index) => ({
-                                "@type": "ListItem",
-                                "position": index + 1,
-                                "item": {
-                                    "@type": "Product",
-                                    "name": release.title,
-                                    "description": release.description,
-                                    "offers": {
-                                        "@type": "Offer",
-                                        "price": getMinPrice(release),
-                                        "priceCurrency": "BRL"
-                                    }
-                                }
-                            }))
-                        })
-                    }}
-                />
-            </Head>
-
-            <section className="py-20 bg-gradient">
+        <section className="py-20 bg-gradient">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-foreground mb-4">
@@ -299,6 +248,5 @@ export default function ReleasesHighlights({ isLoading: externalLoading }: Relea
                     </div>
                 </div>
             </section>
-        </>
     );
 }
