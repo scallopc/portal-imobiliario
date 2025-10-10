@@ -490,10 +490,10 @@ FRASES NATURAIS PARA COLETA:
           location: userLocation,
           interests: clientInfo.interests || [],
           propertyTypes: relevantProperties.map(p => p.type),
-          priceRange: {
-            min: relevantProperties.length > 0 ? Math.min(...relevantProperties.map(p => p.price || 0)) : undefined,
-            max: relevantProperties.length > 0 ? Math.max(...relevantProperties.map(p => p.price || 0)) : undefined,
-          },
+          priceRange: relevantProperties.length > 0 ? {
+            min: Math.min(...relevantProperties.map(p => p.price || 0)),
+            max: Math.max(...relevantProperties.map(p => p.price || 0)),
+          } : null,
           interactions: [
             {
               timestamp: new Date(),
