@@ -5,7 +5,7 @@ import Header from '@/components/common/header'
 import Footer from '@/components/common/footer'
 import JadeChat from '@/components/common/jade-chat/jade-chat'
 import ReactQueryProvider from '@/app/providers/react-query-provider'
-
+import { Toaster } from 'sonner'
 
 
 export default function RootLayout({
@@ -28,6 +28,7 @@ export default function RootLayout({
           </div>
           <Footer />
           <JadeChat />
+          <Toaster richColors position="top-right" />
         </ReactQueryProvider>
         <script
           dangerouslySetInnerHTML={{

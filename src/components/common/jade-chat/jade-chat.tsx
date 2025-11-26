@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useChatMutation, ChatMessage } from '@/hooks/mutations/use-chat-mutation'
 import { useSessionId } from '@/hooks/mutations/use-chat-tracking'
 import { FloatingButton } from './floating-button'
@@ -10,7 +10,8 @@ import { ChatInput } from './chat-input'
 import { ChatFallback } from './chat-fallback'
 import type { ChatUiMessage } from './types'
 
-export default function JadeChat() {
+function JadeChat() {
+  const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatUiMessage[]>([
     { id: '1', text: 'Olá! Eu sou a JADE, sua concierge imobiliária inteligente. Como posso ajudá-lo a encontrar o imóvel perfeito hoje?', isUser: false, timestamp: new Date() },
@@ -56,7 +57,7 @@ export default function JadeChat() {
         },
         onError: (error: Error) => {
           let errorText = 'Erro ao buscar resposta da IA.'
-          
+
           // Mensagens específicas baseadas no tipo de erro
           if (error.message.includes('autenticação')) {
             errorText = 'Erro de configuração da IA. Tente novamente em alguns minutos.'
@@ -69,16 +70,16 @@ export default function JadeChat() {
           } else if (error.message.includes('Timeout')) {
             errorText = 'A resposta está demorando mais que o esperado. Tente novamente.'
           }
-          
+
           const errorMessage = { id: Date.now().toString() + '-err', text: errorText, isUser: false, timestamp: new Date() }
           setMessages(prev => [...prev, errorMessage])
-          
+
           // Se houver muitos erros consecutivos, mostrar fallback
-          const recentErrors = messages.filter(m => 
-            !m.isUser && m.text.includes('Erro') && 
+          const recentErrors = messages.filter(m =>
+            !m.isUser && m.text.includes('Erro') &&
             Date.now() - m.timestamp.getTime() < 60000 // últimos 60 segundos
           ).length
-          
+
           if (recentErrors >= 2) {
             setHasError(true)
             setErrorMessage('Múltiplos erros detectados. Serviço pode estar instável.')
@@ -95,20 +96,41 @@ export default function JadeChat() {
     setMessages(prev => prev.filter(m => !m.text.includes('Erro')))
   }
 
+  const handleScheduleVisit = useCallback((propertyId: string, propertyTitle: string) => {
+    // Adiciona uma mensagem de confirmação
+    const confirmationMessage: ChatUiMessage = {
+      id: `schedule-${Date.now()}`,
+      text: `Vou te ajudar a agendar uma visita para o imóvel ${propertyTitle}. Por favor, selecione a data e horário desejados.`,
+      isUser: false,
+      timestamp: new Date(),
+      propertyId,
+      propertyTitle,
+    }
+
+    setMessages(prev => [...prev, confirmationMessage])
+  }, [])
+
   return (
     <>
-      <FloatingButton isOpen={isOpen} onToggle={() => setIsOpen(v => !v)} />
+      <FloatingButton isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
       {isOpen && (
-        hasError ? (
-          <ChatFallback error={errorMessage} onRetry={handleRetry} />
-        ) : (
-          <div className="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-w-sm h-[calc(100vh-8rem)] max-h-[500px] min-h-[400px] bg-[#1a1510]/35 rounded-3xl shadow-2xl border-2 border-gold/30 z-50 flex flex-col overflow-hidden backdrop-blur-sm">
-            <ChatHeader />
-            <MessagesList messages={messages} />
-            <ChatInput disabled={chatMutation.isPending} onSend={handleSend} />
-          </div>
-        )
+        <div className="fixed bottom-20 right-4 w-full max-w-md h-[600px] bg-background border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden z-50">
+          <ChatHeader />
+          {hasError ? (
+            <ChatFallback />
+          ) : (
+            <>
+              <MessagesList
+                messages={messages}
+                onScheduleVisit={handleScheduleVisit}
+              />
+              <ChatInput onSend={handleSend} disabled={isLoading} />
+            </>
+          )}
+        </div>
       )}
     </>
   )
 }
+
+export default JadeChat

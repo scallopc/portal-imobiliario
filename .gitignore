@@ -26,10 +26,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-.env
-
 # vercel
 .vercel
 
@@ -40,3 +36,7 @@ next-env.d.ts
 .windsurfrules
 
 ABOUT.md
+.env.local
+.env
+.env.example
+

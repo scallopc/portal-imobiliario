@@ -4,6 +4,7 @@ import React from 'react';
 import { useProperty } from '@/hooks/queries/use-property';
 import { ImageGallery } from '@/components/common/image-gallery';
 import { EmbedPlayer } from '@/components/properties/embed-player';
+import { ScheduleVisitDialog } from '@/components/common/schedule-visit-dialog';
 import { Loader2, AlertTriangle, MapPin, Bed, Bath, Car, Square, Tag, Building, Info, Youtube, Camera, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -201,11 +202,20 @@ export default function PropertyDetailPage({ params }: PropertyDetailPageProps) 
                   <CardHeader>
                     <CardTitle className="text-center text-2xl">Ficou interessado?</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
                     <p className="text-center text-muted-foreground mb-6">
-                      Nossa concierge Jade IA pode te ajudar a agendar uma visita ou tirar suas dúvidas.
+                      Agende uma visita ou fale com nossa concierge Jade IA para tirar suas dúvidas.
                     </p>
-                    <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 font-bold">
+                    <ScheduleVisitDialog
+                      propertyId={property.slug || property.title}
+                      propertyTitle={property.title}
+                      trigger={
+                        <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6 font-bold">
+                          Agendar Visita
+                        </Button>
+                      }
+                    />
+                    <Button size="lg" variant="outline" className="w-full border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground text-lg py-6 font-bold">
                       Falar com a Jade
                     </Button>
                   </CardContent>

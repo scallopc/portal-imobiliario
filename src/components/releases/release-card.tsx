@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { WhatsAppButton } from '@/components/common/whatsapp-button';
 import { MapPin, Calendar, Building, TrendingUp, Clock, CheckCircle, Bed } from 'lucide-react';
 import { Release, Unit } from '@/types/releases';
+import { ScheduleVisitDialog } from '../common/schedule-visit-dialog';
 
 interface ReleaseCardProps {
   release: Release;
@@ -186,22 +187,27 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
 
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <Link href={`/releases/${release.slug || release.id}`}>
-            <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              Ver Detalhes
-            </Button>
-          </Link>
-          <WhatsAppButton
-            variant="outline"
-            className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
-            message={`Olá! Tenho interesse no lançamento: ${release.title}. Gostaria de mais informações.`}
-          >
-            Tenho Interesse
-          </WhatsAppButton>
+        <div className="space-y-3">
+          <div className="flex space-x-3">
+            <Link href={`/releases/${release.slug || release.id}`}>
+              <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Ver Detalhes
+              </Button>
+            </Link>
+            <WhatsAppButton
+              variant="outline"
+              className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+              message={`Olá! Tenho interesse no lançamento: ${release.title}. Gostaria de mais informações.`}
+            >
+              Tenho Interesse
+            </WhatsAppButton>
+          </div>
+          <ScheduleVisitDialog
+            propertyId={release.slug ?? release.title ?? ''}
+            propertyTitle={release.title ?? 'Lançamento'}
+          />
         </div>
       </div>
-
       {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-accent/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-accent/5 to-transparent rounded-tr-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WhatsAppButton } from '@/components/common/whatsapp-button';
+import { ScheduleVisitDialog } from '@/components/common/schedule-visit-dialog';
 import { MapPin, Bed, Bath, Car, Square } from 'lucide-react';
 import { PropertyCardSkeleton } from '../skeleton';
 import { PropertyBaseSchema } from "@/schemas/property"
@@ -122,19 +123,25 @@ export function PropertyCard({ property, isLoading }: PropertyCardProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-3">
-          <Link href={`/property/${property.slug}`}>
-            <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              Ver Detalhes
-            </Button>
-          </Link>
-          <WhatsAppButton
-            variant="outline"
-            className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
-            message={`Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`}
-          >
-            Tenho Interesse
-          </WhatsAppButton>
+        <div className="space-y-3">
+          <div className="flex space-x-3">
+            <Link href={`/property/${property.slug}`} className="flex-1">
+              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                Ver Detalhes
+              </Button>
+            </Link>
+            <WhatsAppButton
+              variant="outline"
+              className="flex-1 border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground py-3 text-sm font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+              message={`Olá! Tenho interesse no imóvel: ${property.title}. Gostaria de mais informações.`}
+            >
+              Tenho Interesse
+            </WhatsAppButton>
+          </div>
+          <ScheduleVisitDialog
+            propertyId={property.slug || property.title}
+            propertyTitle={property.title}
+          />
         </div>
       </div>
 
