@@ -75,15 +75,15 @@ export function MessageBubble({ message, onScheduleVisit }: MessageBubbleProps) 
 
   return (
     <div className={`flex ${container}`}>
-      <div className={`max-w-[85%] sm:max-w-[80%] p-2 sm:p-3 rounded-2xl ${bubble}`}>
-        <p className="text-sm">{message.text}</p>
+      <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[80%] p-2.5 sm:p-3 rounded-2xl ${bubble}`}>
+        <p className="text-xs sm:text-sm leading-relaxed">{message.text}</p>
 
         {showScheduleButton && (
           <div className="mt-2">
             <Button
               size="sm"
               variant="outline"
-              className="text-xs py-1 h-auto"
+              className="text-[10px] sm:text-xs py-1 px-2 sm:px-3 h-auto"
               onClick={handleScheduleClick}
               disabled={isScheduling}
             >
@@ -103,7 +103,7 @@ export function MessageBubble({ message, onScheduleVisit }: MessageBubbleProps) 
           </div>
         )}
 
-        <span className="text-xs opacity-60 mt-1 block text-right">
+        <span className="text-[10px] sm:text-xs opacity-60 mt-1 block text-right">
           {message.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>

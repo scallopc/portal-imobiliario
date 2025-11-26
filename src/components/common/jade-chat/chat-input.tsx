@@ -28,7 +28,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="p-4 border-t border-gold/30 bg-darkBg/80 backdrop-blur-sm">
+    <div className="p-3 sm:p-4 border-t border-gold/30 bg-darkBg/80 backdrop-blur-sm shrink-0">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submit)} className="flex gap-2">
           <FormField
@@ -39,7 +39,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
                 <FormControl>
                   <Input
                     placeholder="Digite sua mensagem..."
-                    className="flex-1 bg-darkBg/90 border-2 border-gold/40 rounded-xl text-primary-clean placeholder-darkBrown focus:ring-4 focus:ring-gold/30 focus:border-gold transition-all duration-500 h-auto"
+                    className="flex-1 bg-darkBg/90 border-2 border-gold/40 rounded-xl text-primary-clean placeholder-darkBrown focus:ring-4 focus:ring-gold/30 focus:border-gold transition-all duration-500 h-10 sm:h-auto text-sm sm:text-base"
                     disabled={disabled}
                     {...field}
                   />
@@ -47,7 +47,7 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
               </FormItem>
             )}
           />
-          <Button type="submit" variant="ghost" disabled={disabled} className="bg-gradient-to-r from-gold/20 to-color-accent/20 hover:from-gold/30 hover:to-color-accent/30 text-primary-clean border-2 border-gold/40 hover:border-gold/60 rounded-xl transition-all duration-300">
+          <Button type="submit" variant="ghost" disabled={disabled} className="bg-gradient-to-r from-gold/20 to-color-accent/20 hover:from-gold/30 hover:to-color-accent/30 text-primary-clean border-2 border-gold/40 hover:border-gold/60 rounded-xl transition-all duration-300 h-10 w-10 sm:h-auto sm:w-auto p-2 sm:px-4">
             {disabled ? (
               <svg className="animate-spin h-4 w-4 text-gold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

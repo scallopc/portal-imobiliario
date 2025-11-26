@@ -114,8 +114,8 @@ function JadeChat() {
     <>
       <FloatingButton isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
       {isOpen && (
-        <div className="fixed bottom-20 right-4 w-full max-w-md h-[600px] bg-background border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden z-50">
-          <ChatHeader />
+        <div className="fixed bottom-4 right-4 w-[calc(100vw-2rem)] sm:w-full sm:max-w-md h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)] max-h-[700px] bg-background border border-gray-200 dark:border-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden z-50">
+          <ChatHeader onClose={() => setIsOpen(false)} />
           {hasError ? (
             <ChatFallback />
           ) : (
