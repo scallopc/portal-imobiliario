@@ -139,7 +139,7 @@ export default function ReleaseDetailPage({ params }: ReleaseDetailPageProps) {
         <div className="container mx-auto px-4 py-12 md:py-16">
           {/* Back Button */}
           <div className="mb-6">
-            <Link href="/releases">
+            <Link href="/lancamentos">
               <Button variant="outline" className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Voltar aos Lançamentos

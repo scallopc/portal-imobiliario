@@ -125,7 +125,7 @@ export function PropertyCard({ property, isLoading }: PropertyCardProps) {
         {/* Action Buttons */}
         <div className="space-y-3">
           <div className="flex space-x-3">
-            <Link href={`/property/${property.slug}`} className="flex-1">
+            <Link href={`/imoveis/${property.slug}`} className="flex-1">
               <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 Ver Detalhes
               </Button>

@@ -17,18 +17,72 @@ interface PropertyWithAlternative extends Property {
   isAlternative?: boolean;
 }
 
-// Função para buscar propriedades do Firebase
+// Função para buscar propriedades do Firebase (properties + releases)
 async function getPropertiesData(): Promise<Property[]> {
   try {
-    const snapshot = await adminDb.collection("properties").limit(50).get();
-    const properties = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.() || doc.data().createdAt,
-      updatedAt: doc.data().updatedAt?.toDate?.() || doc.data().updatedAt,
-    })) as Property[];
+    // Buscar em ambas as coleções em paralelo
+    const [propertiesSnapshot, releasesSnapshot] = await Promise.all([
+      adminDb.collection("properties").limit(50).get(),
+      adminDb.collection("releases").limit(50).get()
+    ]);
 
-    return properties;
+    // Mapear properties
+    const properties = propertiesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title || '',
+        description: data.description || '',
+        type: data.type || '',
+        price: data.price || 0,
+        area: data.area || 0,
+        bedrooms: data.bedrooms || 0,
+        bathrooms: data.bathrooms || 0,
+        parking: data.parking || 0,
+        address: data.address || {},
+        images: data.images || [],
+        features: data.features || [],
+        contact: data.contact || {},
+        slug: data.slug || doc.id,
+        source: 'properties',
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      } as Property;
+    });
+
+    // Mapear releases (adaptar estrutura para Property)
+    const releases = releasesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      // Pegar a primeira unidade para extrair informações
+      const firstUnit = data.units?.[0] || {};
+      
+      return {
+        id: doc.id,
+        title: data.title || '',
+        description: data.description || '',
+        type: firstUnit.type || 'apartamento',
+        price: data.minPrice || firstUnit.price || 0,
+        area: firstUnit.area || 0,
+        bedrooms: firstUnit.bedrooms || 0,
+        bathrooms: firstUnit.bathrooms || 0,
+        parking: firstUnit.parking || 0,
+        address: data.location || {},
+        images: data.images || [],
+        features: data.features || [],
+        contact: data.contact || {},
+        slug: data.slug || doc.id,
+        source: 'releases',
+        developer: data.developer,
+        deliveryDate: data.deliveryDate,
+        totalUnits: data.totalUnits,
+        availableUnits: data.availableUnits,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+      } as Property;
+    });
+
+    // Combinar ambas as coleções
+    return [...properties, ...releases];
   } catch (error) {
     console.error("Erro ao buscar propriedades:", error);
     return [];
@@ -41,10 +95,22 @@ async function searchProperties(query: string, userLocation?: GeoLocation): Prom
     const queryLower = query.toLowerCase();
     const allProperties = await getPropertiesData();
 
-    // Extrair informações da query
-    const priceMatch = queryLower.match(/(\d+)\s*(?:mil|k|reais?|r\$)/i);
-    const maxPrice = priceMatch ? parseInt(priceMatch[1]) * 1000 : null;
-    const minPrice = priceMatch ? Math.max(0, parseInt(priceMatch[1]) * 1000 - 50000) : null;
+    // Extrair informações da query (incluindo milhões)
+    const priceMatchMillion = queryLower.match(/(\d+(?:[.,]\d+)?)\s*(?:milhões?|milhao|milhoes|m)\b/i);
+    const priceMatchThousand = queryLower.match(/(\d+)\s*(?:mil|k)\b/i);
+    
+    let maxPrice = null;
+    let minPrice = null;
+    
+    if (priceMatchMillion) {
+      // Converter milhões para valor numérico
+      const millions = parseFloat(priceMatchMillion[1].replace(',', '.'));
+      maxPrice = millions * 1000000;
+      minPrice = Math.max(0, maxPrice * 0.8); // 20% abaixo
+    } else if (priceMatchThousand) {
+      maxPrice = parseInt(priceMatchThousand[1]) * 1000;
+      minPrice = Math.max(0, maxPrice - 50000);
+    }
 
     // Buscar por tipo de imóvel
     const propertyTypes = ["casa", "apartamento", "terreno", "comercial"];
@@ -177,6 +243,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Configuração da IA não encontrada" }, { status: 500 });
     }
 
+    // Capturar o domínio da requisição
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const host = req.headers.get('host') || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+
     const { messages, sessionId } = await req.json();
     const trimmed = Array.isArray(messages) ? messages.slice(-6) : [];
     if (!trimmed.length) {
@@ -233,13 +304,19 @@ export async function POST(req: NextRequest) {
     ];
     const hasSearchTerms = searchTerms.some(term => lastMessageLower.includes(term));
 
+    // Verificar todo o histórico de mensagens do usuário para orçamento
+    const allUserMessages = trimmed.filter(m => m.role === 'user').map(m => m.content).join(' ').toLowerCase();
+    
     // Sinais do que ainda falta perguntar
-    const needsType = !/(apartamento|casa|comercial|terreno)/.test(lastMessageLower);
-    const priceMatchFinal = lastMessageLower.match(/(\d+)\s*(?:mil|k|reais?|r\$)/i);
+    const needsType = !/(apartamento|casa|comercial|terreno)/.test(allUserMessages);
+    
+    // Detectar orçamento em diferentes formatos (mil, milhão, milhões, k, m, R$)
+    const priceMatchFinal = allUserMessages.match(/(\d+(?:[.,]\d+)?)\s*(?:milhões?|milhao|milhoes|mil|k|m|reais?|r\$)/i);
     const needsBudget = !priceMatchFinal;
+    
     const needsRegion =
       !preferredCity &&
-      !/(\bbairro\b|\bcidade\b|\bzona\b|sp\b|são paulo|rio|bh|curitiba|porto alegre|salvador)/.test(lastMessageLower);
+      !/(\bbairro\b|\bcidade\b|\bzona\b|barra|recreio|tijuca|ipanema|leblon|copacabana|botafogo|flamengo|laranjeiras|icaraí|niterói|sp\b|são paulo|rio|bh|curitiba|porto alegre|salvador)/.test(allUserMessages);
 
     let relevantProperties: PropertyWithAlternative[] = [];
     if (hasSearchTerms) {
@@ -257,13 +334,18 @@ export async function POST(req: NextRequest) {
       relevantProperties = [...relevantProperties].sort((a, b) => score(b) - score(a));
     }
 
-    const focusLines = [
-      needsType ? "- Pergunte o tipo (apartamento, casa ou comercial?)" : "",
-      needsBudget ? "- Pergunte orçamento aproximado" : "",
-      needsRegion ? "- Pergunte região/bairro preferido" : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
+    // Verificar se tem informações suficientes para mostrar imóveis
+    const hasEnoughInfo = !needsType && !needsBudget && !needsRegion;
+    
+    const focusLines = hasEnoughInfo
+      ? "AÇÃO IMEDIATA: O cliente já forneceu todas as informações necessárias. MOSTRE OS IMÓVEIS COM LINKS AGORA! Não faça mais perguntas."
+      : [
+          needsType ? "- Pergunte o tipo (apartamento, casa ou comercial?)" : "",
+          needsBudget ? "- Pergunte orçamento aproximado" : "",
+          needsRegion ? "- Pergunte região/bairro preferido" : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
 
     // Criar contexto com dados das propriedades (montado de forma segura)
     let propertiesContext = "";
@@ -288,10 +370,16 @@ export async function POST(req: NextRequest) {
         })
         .join("\n");
 
+      // Separar properties e releases
+      const propertiesCount = propertiesData.filter(p => (p as any).source === 'properties').length;
+      const releasesCount = propertiesData.filter(p => (p as any).source === 'releases').length;
+
       const blocos: string[] = [];
       blocos.push("INFORMAÇÕES SOBRE IMÓVEIS DISPONÍVEIS:");
       blocos.push("");
       blocos.push(`Total de imóveis cadastrados: ${propertiesData.length}`);
+      blocos.push(`- Imóveis individuais: ${propertiesCount}`);
+      blocos.push(`- Lançamentos imobiliários: ${releasesCount}`);
       blocos.push("");
       blocos.push("LOCALIZAÇÃO DO CLIENTE:");
       blocos.push(`- Cidade: ${userLocation.city}`);
@@ -317,6 +405,8 @@ export async function POST(req: NextRequest) {
         const listaRelevantes = relevantProperties
           .slice(0, 5)
           .map(p => {
+            const slug = (p as any).slug || p.id;
+            const propertyUrl = `${baseUrl}/imoveis/${slug}`;
             const linhas: string[] = [];
             linhas.push(`- ${p.title}`);
             linhas.push(`  Tipo: ${p.type}`);
@@ -325,12 +415,9 @@ export async function POST(req: NextRequest) {
             linhas.push(`  Área: ${p.area}m²`);
             if (p.bedrooms) linhas.push(`  Quartos: ${p.bedrooms}`);
             if (p.bathrooms) linhas.push(`  Banheiros: ${p.bathrooms}`);
-            if (p.description) linhas.push(`  Descrição: ${p.description.substring(0, 100)}...`);
+            linhas.push(`  Link: ${propertyUrl}`);
             linhas.push(
               `  VANTAGENS: ${(p.features && p.features.slice(0, 3).join(", ")) || "Localização privilegiada, acabamento de qualidade"}`
-            );
-            linhas.push(
-              `  CONTATO: ${p.contact?.name || "Corretor especializado"} - ${p.contact?.phone || "(11) 99999-9999"}`
             );
             if ((p as any).isAlternative)
               linhas.push("  SUGESTÃO ALTERNATIVA: Esta é uma opção que pode superar suas expectativas!");
@@ -342,14 +429,12 @@ export async function POST(req: NextRequest) {
         blocos.push("IMÓVEIS RELEVANTES PARA SUA BUSCA:");
         blocos.push(listaRelevantes);
         blocos.push("");
-        blocos.push("DICAS DE VENDA:");
-        blocos.push("- Destaque a localização e facilidades próximas");
-        blocos.push("- Mencione possibilidades de financiamento");
-        blocos.push("- Sugira agendar visita para conhecer pessoalmente");
-        blocos.push("- Ofereça opções de parcelamento");
-        blocos.push("- Enfatize a oportunidade única");
-        blocos.push("- Se for alternativa, destaque como pode ser melhor que o solicitado");
-        blocos.push("- Sempre seja positivo e entusiasta sobre todas as opções");
+        blocos.push("INSTRUÇÕES IMPORTANTES:");
+        blocos.push("- SEMPRE inclua os links dos imóveis na sua resposta");
+        blocos.push("- Seja OBJETIVA e DIRETA, sem perguntas desnecessárias");
+        blocos.push("- Se já tem todas as informações necessárias (tipo, região, orçamento), NÃO pergunte novamente");
+        blocos.push("- Apresente os imóveis de forma clara com seus links");
+        blocos.push("- Sugira agendar visita apenas após mostrar as opções");
       }
 
       blocos.push("");
@@ -370,16 +455,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Erro na configuração da IA" }, { status: 500 });
     }
 
+    // Informações do cliente já coletadas
+    const clientDataContext = [];
+    if (clientInfo.name) clientDataContext.push(`Nome: ${clientInfo.name}`);
+    if (clientInfo.phone) clientDataContext.push(`Telefone: ${clientInfo.phone}`);
+    if (clientInfo.email) clientDataContext.push(`Email: ${clientInfo.email}`);
+    
+    // Adicionar informações sobre preferências já mencionadas
+    if (!needsType) {
+      const typeMatch = allUserMessages.match(/(apartamento|casa|comercial|terreno)/i);
+      if (typeMatch) clientDataContext.push(`Tipo de imóvel: ${typeMatch[1]}`);
+    }
+    if (!needsBudget && priceMatchFinal) {
+      clientDataContext.push(`Orçamento: ${priceMatchFinal[0]}`);
+    }
+    if (!needsRegion) {
+      const regionMatch = allUserMessages.match(/(barra|recreio|tijuca|ipanema|leblon|copacabana|botafogo|flamengo|laranjeiras|icaraí|niterói)/i);
+      if (regionMatch) clientDataContext.push(`Região preferida: ${regionMatch[1]}`);
+    }
+    
+    const clientDataInfo = clientDataContext.length > 0 
+      ? `\n\nDADOS JÁ COLETADOS DO CLIENTE:\n${clientDataContext.join('\n')}\n- NÃO pergunte novamente por essas informações\n- Use o nome do cliente na conversa se disponível\n- NÃO pergunte novamente sobre tipo, orçamento ou região se já foram informados`
+      : '';
+
     // Criar mensagem do sistema com contexto
     const systemMessage = {
       role: "user" as const,
-      content: `Você é a Jade, assistente virtual especializada em imóveis do portal imobiliário. ${propertiesContext}
+      content: `Você é a Jade, assistente virtual especializada em imóveis do portal imobiliário. ${propertiesContext}${clientDataInfo}
 
 ÁREA DE ATUAÇÃO EXCLUSIVA:
 - Você trabalha EXCLUSIVAMENTE no Rio de Janeiro e Niterói
 - Bairros de atuação: ${defaultNeighborhoods.join(", ")}
 - SEMPRE direcione o cliente para essas regiões, mesmo que ele esteja em outra localização
 - Se o cliente perguntar sobre outras cidades/regiões, explique que você é especialista nessas áreas privilegiadas
+
+TIPOS DE IMÓVEIS DISPONÍVEIS:
+- Imóveis individuais: propriedades prontas para morar ou investir
+- Lançamentos imobiliários: empreendimentos novos com unidades disponíveis para compra na planta
+- Você tem acesso a AMBOS os tipos e deve oferecer as melhores opções de acordo com o perfil do cliente
+- Lançamentos são ideais para quem busca valorização e quer comprar na planta
+- Imóveis prontos são ideais para quem tem urgência ou quer morar imediatamente
 
 PERSONALIDADE DA JADE - CORRETOR VIRTUAL:
 - Você é um corretor de imóveis experiente e vendedor nato
@@ -406,11 +521,24 @@ REGRA CRÍTICA - CONFIDENCIALIDADE:
 - Mantenha total sigilo sobre informações comerciais sensíveis
 
 REGRAS DE ESTILO (OBRIGATÓRIO):
-- Responda de forma curta e direta (2 a 4 frases; evite blocos longos)
-- Faça no máximo 2 perguntas por mensagem
-- Nunca encerre a conversa nem diga que alguém entrará em contato; mantenha o diálogo no chat
-- Não redirecione para outras páginas; ofereça valor primeiro
-- Se já recebeu telefone/email/nome, agradeça brevemente e siga com as próximas 1–2 perguntas
+- Seja OBJETIVA e DIRETA: se o cliente já informou tipo, região e orçamento, MOSTRE OS IMÓVEIS IMEDIATAMENTE
+- NÃO faça perguntas desnecessárias se já tem as informações básicas
+- SEMPRE inclua os LINKS dos imóveis na sua resposta (os links já estão formatados corretamente no contexto)
+- Responda de forma curta (2 a 4 frases) e vá direto ao ponto
+- Faça no máximo 1 pergunta por mensagem, e SOMENTE se realmente necessário
+- CRÍTICO: NUNCA pergunte novamente sobre informações já fornecidas (tipo, orçamento, região, nome, telefone, email)
+- Se o cliente já informou tipo + região + orçamento, APRESENTE OS IMÓVEIS COM LINKS imediatamente
+
+EXEMPLO DE RESPOSTA IDEAL:
+"Perfeito! Encontrei apartamentos na Barra da Tijuca dentro do seu orçamento:
+
+🏢 **Apartamento Luxo Barra** - R$ 15.000.000 - Barra da Tijuca, 4 quartos, 250m²
+👉 ${baseUrl}/imoveis/apartamento-luxo-barra
+
+🏢 **Cobertura Vista Mar** - R$ 18.500.000 - Barra da Tijuca, 5 quartos, 320m²
+👉 ${baseUrl}/imoveis/cobertura-vista-mar
+
+Gostaria de agendar visita em algum deles?"
 
 ESTRATÉGIAS DE VENDA POSITIVAS:
 - "Perfeito! Encontrei algumas oportunidades incríveis para você!"
@@ -424,26 +552,13 @@ LINGUAGEM POSITIVA:
 - Sempre destaque vantagens e benefícios
 - Sugira alternativas como melhorias, não como segunda opção
 
-COLETA SUTIL DE DADOS (ESTRATÉGIA PROGRESSIVA):
-- NOME: Após mostrar interesse, pergunte naturalmente: "Como posso te chamar?" ou "Qual seu nome?"
-- TELEFONE: Quando demonstrar interesse real, sugira: "Quer me passar seu WhatsApp para eu te enviar algumas opções?" ou "Posso te ligar para agilizar a busca?"
-- EMAIL: Após engajamento, ofereça: "Te mando por email os detalhes completos, qual seu email?" ou "Posso te enviar o material por email?"
-- SEQUÊNCIA IDEAL: Nome → Telefone → Email (colete gradualmente, não tudo de uma vez)
-- Use justificativas de valor: "Para te enviar as melhores opções", "Para agilizar o atendimento", "Para não perder essas oportunidades"
-- SEMPRE contextualize a coleta com benefícios para o cliente
-
-GATILHOS PARA COLETA DE CONTATO:
-- Quando o cliente demonstra interesse em um imóvel específico
-- Após mencionar preço ou orçamento
-- Quando pergunta sobre financiamento ou documentação
-- Ao solicitar mais informações sobre localização
-- Quando menciona urgência ou prazo para decisão
-
-FRASES NATURAIS PARA COLETA:
-- "Para te enviar as opções mais atualizadas, como posso te chamar?"
-- "Tenho algumas oportunidades perfeitas! Qual seu WhatsApp para te mandar?"
-- "Posso te enviar um material completo por email com todas as informações?"
-- "Para não perder essas oportunidades, me passa seu contato?"
+COLETA DE DADOS (APENAS QUANDO NECESSÁRIO):
+- PRIORIDADE: Mostre os imóveis PRIMEIRO, colete dados DEPOIS
+- Só pergunte nome/telefone/email APÓS mostrar pelo menos 2-3 opções de imóveis
+- Se já tiver qualquer dado (nome, telefone ou email), NÃO pergunte novamente
+- Seja sutil: "Como posso te chamar?" ou "Quer receber mais opções no WhatsApp?"
+- NUNCA peça múltiplas informações de uma vez
+- Foque em MOSTRAR VALOR antes de coletar dados
 
 - Sempre direcione para suas áreas de atuação: "Temos incríveis oportunidades na Barra da Tijuca, Recreio e região oceânica de Niterói!"
 - Se o cliente estiver fora do Rio/Niterói, destaque: "Que tal investir no Rio? Temos as melhores oportunidades da região!"`,
@@ -548,7 +663,33 @@ FRASES NATURAIS PARA COLETA:
       // Não falhar a resposta por erro no tracking
     }
 
-    return NextResponse.json({ reply: text, sessionId: chatSessionId });
+    // Detectar intenção de agendamento
+    const scheduleIntentKeywords = [
+      'agendar',
+      'visita',
+      'visitar',
+      'conhecer',
+      'ver o imóvel',
+      'ver a propriedade',
+      'marcar',
+      'horário',
+      'quando posso',
+      'gostaria de visitar'
+    ];
+    const hasScheduleIntent = scheduleIntentKeywords.some(keyword => 
+      lastMessageLower.includes(keyword)
+    );
+
+    return NextResponse.json({ 
+      reply: text, 
+      sessionId: chatSessionId,
+      clientData: {
+        name: clientInfo.name,
+        email: clientInfo.email,
+        phone: clientInfo.phone,
+      },
+      scheduleIntent: hasScheduleIntent,
+    });
   } catch (error: any) {
     console.error("Erro na API do chat:", error);
     

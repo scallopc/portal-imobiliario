@@ -191,23 +191,31 @@ export function extractClientInfo(messages: any[]): Partial<ClientInfo> {
   
   const allText = messages.map(m => m.content).join(' ').toLowerCase()
   
-  // Extrair nome (padrões comuns)
+  // Filtrar apenas mensagens do usuário (role: user)
+  const userMessages = messages.filter(m => m.role === 'user').map(m => m.content).join(' ').toLowerCase()
+  
+  // Extrair nome (padrões comuns) - apenas de mensagens do usuário
   const namePatterns = [
-    /me chamo\s+([a-zA-ZÀ-ÿ\s]+)/i,
-    /sou\s+([a-zA-ZÀ-ÿ\s]+)/i,
-    /nome\s+(?:é|e)\s+([a-zA-ZÀ-ÿ\s]+)/i,
-    /chamo\s+([a-zA-ZÀ-ÿ\s]+)/i
+    /(?:me chamo|meu nome é|meu nome e|sou o|sou a)\s+([a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)?)/i,
+    /(?:pode me chamar de|me chame de)\s+([a-zA-ZÀ-ÿ]+)/i,
   ]
   
+  // Lista de nomes a ignorar (IA, assistentes, etc)
+  const ignoredNames = ['jade', 'assistente', 'ia', 'bot', 'chatbot', 'concierge']
+  
   for (const pattern of namePatterns) {
-    const match = allText.match(pattern)
+    const match = userMessages.match(pattern)
     if (match && match[1]) {
-      clientInfo.name = match[1].trim()
-      break
+      const name = match[1].trim()
+      // Verificar se não é um nome ignorado
+      if (!ignoredNames.includes(name.toLowerCase())) {
+        clientInfo.name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+        break
+      }
     }
   }
   
-  // Extrair telefone
+  // Extrair telefone - apenas de mensagens do usuário
   const phonePatterns = [
     /(\d{2}\s?\d{4,5}\s?\d{4})/g,
     /(\d{2}\s?\d{8,9})/g,
@@ -215,16 +223,16 @@ export function extractClientInfo(messages: any[]): Partial<ClientInfo> {
   ]
   
   for (const pattern of phonePatterns) {
-    const match = allText.match(pattern)
+    const match = userMessages.match(pattern)
     if (match) {
       clientInfo.phone = match[0].replace(/\s/g, '')
       break
     }
   }
   
-  // Extrair email
+  // Extrair email - apenas de mensagens do usuário
   const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
-  const emailMatch = allText.match(emailPattern)
+  const emailMatch = userMessages.match(emailPattern)
   if (emailMatch) {
     clientInfo.email = emailMatch[0]
   }

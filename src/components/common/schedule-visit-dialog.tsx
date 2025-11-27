@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useClientData } from '@/hooks/use-client-data';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from 'lucide-react';
@@ -21,6 +22,7 @@ interface ScheduleVisitDialogProps {
   propertyTitle: string;
   trigger?: React.ReactNode;
   triggerClassName?: string;
+  autoOpen?: boolean;
 }
 
 export function ScheduleVisitDialog({
@@ -28,10 +30,18 @@ export function ScheduleVisitDialog({
   propertyTitle,
   trigger,
   triggerClassName,
+  autoOpen = false,
 }: ScheduleVisitDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [isScheduling, setIsScheduling] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const { clientData } = useClientData();
+
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -157,6 +167,7 @@ export function ScheduleVisitDialog({
               name="name"
               type="text"
               required
+              defaultValue={clientData.name || ''}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Seu nome completo"
             />
@@ -171,6 +182,7 @@ export function ScheduleVisitDialog({
               name="email"
               type="email"
               required
+              defaultValue={clientData.email || ''}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="seu@email.com"
             />
@@ -185,6 +197,7 @@ export function ScheduleVisitDialog({
               name="phone"
               type="tel"
               required
+              defaultValue={clientData.phone || ''}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="(00) 00000-0000"
             />

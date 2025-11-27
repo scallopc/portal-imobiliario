@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useChatMutation, ChatMessage } from '@/hooks/mutations/use-chat-mutation'
 import { useSessionId } from '@/hooks/mutations/use-chat-tracking'
+import { useClientData } from '@/hooks/use-client-data'
 import { FloatingButton } from './floating-button'
 import { ChatHeader } from './chat-header'
 import { MessagesList } from './messages-list'
 import { ChatInput } from './chat-input'
 import { ChatFallback } from './chat-fallback'
+import { ScheduleVisitDialog } from '@/components/common/schedule-visit-dialog'
 import type { ChatUiMessage } from './types'
 
 function JadeChat() {
@@ -18,8 +20,12 @@ function JadeChat() {
   ])
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false)
+  const [schedulePropertyId, setSchedulePropertyId] = useState<string>('')
+  const [schedulePropertyTitle, setSchedulePropertyTitle] = useState<string>('')
   const chatMutation = useChatMutation()
   const sessionId = useSessionId()
+  const { clientData, setClientData } = useClientData()
 
   // Verificar se o chat está funcionando ao montar o componente
   useEffect(() => {
@@ -51,9 +57,40 @@ function JadeChat() {
     chatMutation.mutate(
       { messages: chatHistory, sessionId },
       {
-        onSuccess: (data: { reply: string }) => {
+        onSuccess: (data) => {
           const aiMessage = { id: Date.now().toString() + '-ai', text: data.reply, isUser: false, timestamp: new Date() }
           setMessages(prev => [...prev, aiMessage])
+
+          // Armazenar dados do cliente se disponíveis
+          if (data.clientData) {
+            const newData: any = {}
+            if (data.clientData.name) newData.name = data.clientData.name
+            if (data.clientData.email) newData.email = data.clientData.email
+            if (data.clientData.phone) newData.phone = data.clientData.phone
+            
+            if (Object.keys(newData).length > 0) {
+              setClientData(newData)
+            }
+          }
+
+          // Se detectou intenção de agendamento, preparar para abrir o dialog
+          if (data.scheduleIntent) {
+            // Adicionar mensagem orientando o cliente
+            const scheduleMessage: ChatUiMessage = {
+              id: Date.now().toString() + '-schedule',
+              text: 'Perfeito! Vou te redirecionar para o formulário de agendamento. Preencha os dados e escolha o melhor horário para você! 📅',
+              isUser: false,
+              timestamp: new Date()
+            }
+            setMessages(prev => [...prev, scheduleMessage])
+            
+            // Abrir dialog após um pequeno delay
+            setTimeout(() => {
+              setSchedulePropertyId('chat-schedule')
+              setSchedulePropertyTitle('Visita ao Imóvel')
+              setShowScheduleDialog(true)
+            }, 1500)
+          }
         },
         onError: (error: Error) => {
           let errorText = 'Erro ao buscar resposta da IA.'
@@ -128,6 +165,14 @@ function JadeChat() {
             </>
           )}
         </div>
+      )}
+      
+      {showScheduleDialog && (
+        <ScheduleVisitDialog
+          propertyId={schedulePropertyId}
+          propertyTitle={schedulePropertyTitle}
+          autoOpen={true}
+        />
       )}
     </>
   )

@@ -189,7 +189,7 @@ export function ReleaseCard({ release, units, isLoading }: ReleaseCardProps) {
         {/* Action Buttons */}
         <div className="space-y-3">
           <div className="flex space-x-3">
-            <Link href={`/releases/${release.slug || release.id}`}>
+            <Link href={`/lancamentos/${release.slug || release.id}`}>
               <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 Ver Detalhes
               </Button>

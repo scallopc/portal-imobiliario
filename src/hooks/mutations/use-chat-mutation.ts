@@ -12,6 +12,13 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   reply: string
+  sessionId?: string
+  clientData?: {
+    name?: string
+    email?: string
+    phone?: string
+  }
+  scheduleIntent?: boolean
 }
 
 async function sendChatMessage(data: ChatRequest): Promise<ChatResponse> {
